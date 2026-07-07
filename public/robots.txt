@@ -1,0 +1,13 @@
+User-Agent: *
+Allow: /
+Allow: /_next/static/
+Allow: /_next/image
+Allow: /api/media/
+Allow: /api/og
+Disallow: /admin/
+Disallow: /api/
+Disallow: /search
+Disallow: /*?*
+
+Sitemap: https://desperatelyseeking.xyz/sitemap.xml
+Sitemap: https://desperatelyseeking.xyz/image-sitemap.xml

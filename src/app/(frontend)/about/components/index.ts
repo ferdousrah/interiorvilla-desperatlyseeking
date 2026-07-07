@@ -1,0 +1,5 @@
+export { ExperienceSection } from './ExperienceSection'
+export { ApproachSection } from './ApproachSection'
+export { MissionVisionSection } from './MissionVisionSection'
+export { TeamSection } from './TeamSection'
+export { AboutCTASection } from './AboutCTASection'
