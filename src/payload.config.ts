@@ -93,9 +93,10 @@ export default buildConfig({
   db: postgresAdapter({
     // Schema auto-sync (drizzle "push") runs ONLY in dev. In production we
     // don't want a runtime schema push on cold start — it was a compounding
-    // factor in the intermittent home-page errors. Dev shares the same remote
-    // DB, so the schema is already synced by the time we deploy.
-    push: process.env.NODE_ENV !== 'production',
+    // factor in the intermittent home-page errors. Exception: set DB_PUSH=true
+    // for the FIRST deploy against a fresh/empty database so the schema gets
+    // created, then remove the flag.
+    push: process.env.NODE_ENV !== 'production' || process.env.DB_PUSH === 'true',
     pool: {
       connectionString: process.env.DATABASE_URI || '',
       // The DB is remote, so idle TCP connections get silently dropped by the
