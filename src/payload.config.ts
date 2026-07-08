@@ -45,6 +45,7 @@ import GalleryPage from './globals/GalleryPage'
 import SiteSettings from './globals/SiteSettings'
 import { sendEmailHandler } from './payload-cms-email-endpoint.js'
 import { getProjectsHandler } from './endpoints/projects'
+import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -91,12 +92,14 @@ export default buildConfig({
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
   db: postgresAdapter({
-    // Schema auto-sync (drizzle "push") runs ONLY in dev. In production we
-    // don't want a runtime schema push on cold start — it was a compounding
-    // factor in the intermittent home-page errors. Exception: set DB_PUSH=true
-    // for the FIRST deploy against a fresh/empty database so the schema gets
-    // created, then remove the flag.
-    push: process.env.NODE_ENV !== 'production' || process.env.DB_PUSH === 'true',
+    // Schema auto-sync (drizzle "push") runs ONLY in dev — the adapter itself
+    // refuses to push when NODE_ENV=production. In production the schema is
+    // managed by prodMigrations below, which run automatically at init.
+    push: process.env.NODE_ENV !== 'production',
+    // Migrations in src/migrations — run automatically when NODE_ENV=production
+    // (including during `next build`), so a fresh database gets its schema
+    // before static generation queries it.
+    prodMigrations: migrations,
     pool: {
       connectionString: process.env.DATABASE_URI || '',
       // The DB is remote, so idle TCP connections get silently dropped by the

@@ -26,6 +26,13 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TYPE "public"."enum__pages_v_version_status" AS ENUM('draft', 'published');
   CREATE TYPE "public"."enum_posts_status" AS ENUM('draft', 'published');
   CREATE TYPE "public"."enum__posts_v_version_status" AS ENUM('draft', 'published');
+  CREATE TYPE "public"."enum_cost_estimates_rooms_room_type" AS ENUM('living-room', 'kitchen', 'bedroom', 'bathroom', 'dining', 'foyer', 'family-living', 'study');
+  CREATE TYPE "public"."enum_cost_estimates_project_type" AS ENUM('full-home', 'single-room', 'office', 'commercial');
+  CREATE TYPE "public"."enum_cost_estimates_flat_status" AS ENUM('ready', 'not-ready', 'under-construction');
+  CREATE TYPE "public"."enum_cost_estimates_city" AS ENUM('dhaka-prime', 'dhaka-other', 'chittagong', 'sylhet', 'other');
+  CREATE TYPE "public"."enum_cost_estimates_package_tier" AS ENUM('standard', 'premium', 'signature');
+  CREATE TYPE "public"."enum_cost_estimates_status" AS ENUM('new', 'contacted', 'qualified', 'quoted', 'converted', 'lost');
+  CREATE TYPE "public"."enum_gallery_items_media_type" AS ENUM('photo', 'video');
   CREATE TYPE "public"."enum_redirects_to_type" AS ENUM('reference', 'custom');
   CREATE TYPE "public"."enum_forms_confirmation_type" AS ENUM('message', 'redirect');
   CREATE TYPE "public"."enum_payload_jobs_log_task_slug" AS ENUM('inline', 'schedulePublish');
@@ -33,6 +40,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TYPE "public"."enum_payload_jobs_task_slug" AS ENUM('inline', 'schedulePublish');
   CREATE TYPE "public"."enum_header_nav_items_link_type" AS ENUM('reference', 'custom');
   CREATE TYPE "public"."enum_footer_nav_items_link_type" AS ENUM('reference', 'custom');
+  CREATE TYPE "public"."enum_cost_estimator_settings_add_ons_room_scope" AS ENUM('living-room', 'kitchen', 'bedroom', 'bathroom', 'dining', 'foyer', 'family-living', 'study', 'whole-project');
   CREATE TABLE "pages_hero_links" (
   	"_order" integer NOT NULL,
   	"_parent_id" integer NOT NULL,
@@ -489,6 +497,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"seo_details_meta_title" varchar,
   	"seo_details_meta_description" varchar,
   	"seo_details_meta_key" varchar,
+  	"seo_details_og_image_id" integer,
   	"seo_details_seo_structured_data" varchar,
   	"featured_image_id" integer,
   	"featured_on_home" boolean DEFAULT false,
@@ -530,7 +539,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"hero_title" varchar,
   	"hero_subtitle" varchar,
   	"intro_section_section_title" varchar,
-  	"intro_section_description" varchar,
+  	"intro_section_description" jsonb,
   	"our_approach_section_title" varchar,
   	"our_approach_description" varchar,
   	"recent_projects_section_title" varchar,
@@ -538,7 +547,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"seo_details_meta_title" varchar,
   	"seo_details_meta_description" varchar,
   	"seo_details_meta_key" varchar,
+  	"seo_details_og_image_id" integer,
   	"seo_details_seo_structured_data" varchar,
+  	"seo_content" jsonb,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
@@ -561,13 +572,25 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
   
+  CREATE TABLE "team_members_specialties" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"tag" varchar NOT NULL
+  );
+  
   CREATE TABLE "team_members" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"name" varchar NOT NULL,
+  	"slug" varchar,
   	"designation" varchar,
   	"license_number" varchar,
   	"photo_id" integer,
   	"photo_url" varchar,
+  	"short_bio" varchar,
+  	"bio" jsonb,
+  	"linkedin_url" varchar,
+  	"position" numeric,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
@@ -582,7 +605,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TABLE "blog_posts" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"title" varchar NOT NULL,
-  	"slug" varchar NOT NULL,
+  	"slug" varchar,
   	"featured_image_id" integer,
   	"short_description" varchar,
   	"full_content" jsonb,
@@ -591,6 +614,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"seo_details_meta_title" varchar,
   	"seo_details_meta_description" varchar,
   	"seo_details_meta_key" varchar,
+  	"seo_details_og_image_id" integer,
   	"seo_details_seo_structured_data" varchar,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
@@ -622,6 +646,10 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"slider_title" varchar,
   	"slider_subtitle" varchar,
   	"slider_position" varchar,
+  	"slider_cta_button1_label" varchar,
+  	"slider_cta_button1_url" varchar,
+  	"slider_cta_button2_label" varchar,
+  	"slider_cta_button2_url" varchar,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
@@ -635,7 +663,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"seo_details_meta_title" varchar,
   	"seo_details_meta_description" varchar,
   	"seo_details_meta_key" varchar,
+  	"seo_details_og_image_id" integer,
   	"seo_details_seo_structured_data" varchar,
+  	"seo_content" jsonb,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
@@ -647,6 +677,66 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"rating" numeric NOT NULL,
   	"review_text" varchar NOT NULL,
   	"review_date" timestamp(3) with time zone,
+  	"position" numeric,
+  	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+  	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
+  );
+  
+  CREATE TABLE "cost_estimates_rooms" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"room_type" "enum_cost_estimates_rooms_room_type" NOT NULL,
+  	"count" numeric NOT NULL
+  );
+  
+  CREATE TABLE "cost_estimates_add_ons" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"key" varchar NOT NULL,
+  	"label" varchar
+  );
+  
+  CREATE TABLE "cost_estimates" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"name" varchar NOT NULL,
+  	"phone" varchar NOT NULL,
+  	"email" varchar,
+  	"location" varchar,
+  	"sms_consent" boolean DEFAULT false,
+  	"project_type" "enum_cost_estimates_project_type" NOT NULL,
+  	"flat_status" "enum_cost_estimates_flat_status",
+  	"city" "enum_cost_estimates_city" NOT NULL,
+  	"package_tier" "enum_cost_estimates_package_tier" NOT NULL,
+  	"total_sft" numeric,
+  	"notes" varchar,
+  	"estimated_min_bdt" numeric NOT NULL,
+  	"estimated_max_bdt" numeric NOT NULL,
+  	"status" "enum_cost_estimates_status" DEFAULT 'new',
+  	"page_url" varchar,
+  	"ip_address" varchar,
+  	"user_agent" varchar,
+  	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+  	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
+  );
+  
+  CREATE TABLE "gallery_categories" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"title" varchar NOT NULL,
+  	"position" numeric,
+  	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+  	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
+  );
+  
+  CREATE TABLE "gallery_items" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"title" varchar NOT NULL,
+  	"category_id" integer NOT NULL,
+  	"media_type" "enum_gallery_items_media_type" DEFAULT 'photo' NOT NULL,
+  	"image_id" integer,
+  	"video_url" varchar,
+  	"link" varchar,
   	"position" numeric,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
@@ -920,6 +1010,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"slider_id" integer,
   	"service_areas_id" integer,
   	"google_reviews_id" integer,
+  	"cost_estimates_id" integer,
+  	"gallery_categories_id" integer,
+  	"gallery_items_id" integer,
   	"redirects_id" integer,
   	"forms_id" integer,
   	"form_submissions_id" integer,
@@ -1023,6 +1116,14 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"title" varchar
   );
   
+  CREATE TABLE "home_faq_section_faqs" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"question" varchar NOT NULL,
+  	"answer" varchar NOT NULL
+  );
+  
   CREATE TABLE "home" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"featured_works_section_title" varchar,
@@ -1046,10 +1147,19 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"google_reviews_total_reviews" numeric,
   	"google_reviews_google_review_url" varchar,
   	"google_reviews_background_color" varchar,
+  	"faq_section_section_label" varchar DEFAULT 'FAQ',
+  	"faq_section_title_primary" varchar DEFAULT 'Frequently Asked',
+  	"faq_section_title_highlight" varchar DEFAULT 'Questions',
+  	"faq_section_description" varchar DEFAULT 'Have questions about our interior design services? We''ve answered the most common ones below. Can''t find what you''re looking for?',
+  	"faq_section_view_all_label" varchar DEFAULT 'View All FAQs',
+  	"faq_section_view_all_url" varchar DEFAULT '/faq',
+  	"faq_section_ask_directly_label" varchar DEFAULT 'Ask Us Directly',
+  	"faq_section_ask_directly_url" varchar DEFAULT '/contact',
   	"seo_details_meta_title" varchar,
   	"seo_details_meta_description" varchar,
   	"seo_details_meta_key" varchar,
   	"seo_details_seo_structured_data" varchar,
+  	"seo_content" jsonb,
   	"updated_at" timestamp(3) with time zone,
   	"created_at" timestamp(3) with time zone
   );
@@ -1073,6 +1183,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"seo_details_meta_description" varchar,
   	"seo_details_meta_key" varchar,
   	"seo_details_seo_structured_data" varchar,
+  	"seo_content" jsonb,
   	"updated_at" timestamp(3) with time zone,
   	"created_at" timestamp(3) with time zone
   );
@@ -1114,6 +1225,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"seo_details_meta_description" varchar,
   	"seo_details_meta_key" varchar,
   	"seo_details_seo_structured_data" varchar,
+  	"seo_content" jsonb,
   	"updated_at" timestamp(3) with time zone,
   	"created_at" timestamp(3) with time zone
   );
@@ -1136,6 +1248,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"seo_details_meta_description" varchar,
   	"seo_details_meta_key" varchar,
   	"seo_details_seo_structured_data" varchar,
+  	"seo_content" jsonb,
   	"updated_at" timestamp(3) with time zone,
   	"created_at" timestamp(3) with time zone
   );
@@ -1160,6 +1273,182 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"parent_id" integer NOT NULL,
   	"path" varchar NOT NULL,
   	"offices_id" integer
+  );
+  
+  CREATE TABLE "cost_estimator_settings_add_ons" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"key" varchar NOT NULL,
+  	"label" varchar NOT NULL,
+  	"room_scope" "enum_cost_estimator_settings_add_ons_room_scope" NOT NULL,
+  	"price_standard" numeric DEFAULT 0 NOT NULL,
+  	"price_premium" numeric DEFAULT 0 NOT NULL,
+  	"price_signature" numeric DEFAULT 0 NOT NULL
+  );
+  
+  CREATE TABLE "cost_estimator_settings_package_standard_features" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"feature" varchar NOT NULL
+  );
+  
+  CREATE TABLE "cost_estimator_settings_package_premium_features" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"feature" varchar NOT NULL
+  );
+  
+  CREATE TABLE "cost_estimator_settings_package_signature_features" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"feature" varchar NOT NULL
+  );
+  
+  CREATE TABLE "cost_estimator_settings_faqs" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"question" varchar NOT NULL,
+  	"answer" varchar NOT NULL
+  );
+  
+  CREATE TABLE "cost_estimator_settings" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"hero_title" varchar DEFAULT 'Calculate Your Dream Space Cost Instantly',
+  	"hero_subtitle" varchar DEFAULT 'Get an approximate cost for your interior design project in just a few steps.',
+  	"welcome_button_label" varchar DEFAULT 'Get Started',
+  	"final_button_label" varchar DEFAULT 'Show Me Total Cost',
+  	"disclaimer" varchar DEFAULT 'These are indicative estimates based on Bangladesh market rates. Actual pricing depends on materials, scope, finishes, and site conditions.',
+  	"result_title" varchar DEFAULT 'Here is your estimated cost',
+  	"result_subtitle" varchar DEFAULT 'Thanks! We''ve also sent these details to our team — they''ll be in touch within one business day with a detailed quote.',
+  	"standard_low" numeric DEFAULT 1500 NOT NULL,
+  	"standard_high" numeric DEFAULT 2500 NOT NULL,
+  	"premium_low" numeric DEFAULT 3000 NOT NULL,
+  	"premium_high" numeric DEFAULT 4500 NOT NULL,
+  	"signature_low" numeric DEFAULT 5000 NOT NULL,
+  	"signature_high" numeric DEFAULT 8000 NOT NULL,
+  	"city_multiplier_dhaka_prime" numeric DEFAULT 1.1 NOT NULL,
+  	"city_multiplier_dhaka_other" numeric DEFAULT 1 NOT NULL,
+  	"city_multiplier_chittagong" numeric DEFAULT 0.95 NOT NULL,
+  	"city_multiplier_sylhet" numeric DEFAULT 0.9 NOT NULL,
+  	"city_multiplier_other" numeric DEFAULT 0.85 NOT NULL,
+  	"project_type_multiplier_residential" numeric DEFAULT 1 NOT NULL,
+  	"project_type_multiplier_single_room" numeric DEFAULT 1 NOT NULL,
+  	"project_type_multiplier_office" numeric DEFAULT 1.1 NOT NULL,
+  	"project_type_multiplier_commercial" numeric DEFAULT 1.15 NOT NULL,
+  	"sft_living_room" numeric DEFAULT 200 NOT NULL,
+  	"sft_kitchen" numeric DEFAULT 80 NOT NULL,
+  	"sft_bedroom" numeric DEFAULT 140 NOT NULL,
+  	"sft_bathroom" numeric DEFAULT 50 NOT NULL,
+  	"sft_dining" numeric DEFAULT 120 NOT NULL,
+  	"sft_foyer" numeric DEFAULT 60 NOT NULL,
+  	"sft_family_living" numeric DEFAULT 150 NOT NULL,
+  	"sft_study" numeric DEFAULT 100 NOT NULL,
+  	"package_standard_title" varchar DEFAULT 'Standard',
+  	"package_standard_description" varchar DEFAULT 'A range of essential home interior solutions that''s perfect for all your needs.',
+  	"package_standard_image_id" integer,
+  	"package_premium_title" varchar DEFAULT 'Premium',
+  	"package_premium_description" varchar DEFAULT 'Superior home interior solutions that will take your interiors to the next level.',
+  	"package_premium_image_id" integer,
+  	"package_signature_title" varchar DEFAULT 'Signature',
+  	"package_signature_description" varchar DEFAULT 'Super premium solutions that will take your home to the premium level.',
+  	"package_signature_image_id" integer,
+  	"meta_title" varchar DEFAULT 'Interior Design Cost Estimator Bangladesh | Desperately Seeking',
+  	"meta_description" varchar DEFAULT 'Calculate the cost of your interior design project in Bangladesh. Free instant estimate for residential, commercial, and office spaces.',
+  	"updated_at" timestamp(3) with time zone,
+  	"created_at" timestamp(3) with time zone
+  );
+  
+  CREATE TABLE "ceo_message_stats" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"value" varchar NOT NULL,
+  	"label" varchar NOT NULL
+  );
+  
+  CREATE TABLE "ceo_message" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"hero_title" varchar DEFAULT 'Message from the CEO',
+  	"hero_hero_image_id" integer,
+  	"ceo_name" varchar DEFAULT 'Md Ashikur Rahman',
+  	"ceo_title" varchar DEFAULT 'Founder & CEO, Desperately Seeking',
+  	"ceo_photo_id" integer,
+  	"quote" varchar,
+  	"message" jsonb,
+  	"signature_image_id" integer,
+  	"seo_details_meta_title" varchar,
+  	"seo_details_meta_description" varchar,
+  	"updated_at" timestamp(3) with time zone,
+  	"created_at" timestamp(3) with time zone
+  );
+  
+  CREATE TABLE "designers_page" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"hero_title" varchar DEFAULT 'Meet Our Team',
+  	"hero_hero_image_id" integer,
+  	"intro_text" varchar DEFAULT 'The creative minds behind every Desperately Seeking project — architects, interior designers, and project managers who turn your vision into reality.',
+  	"seo_details_meta_title" varchar,
+  	"seo_details_meta_description" varchar,
+  	"updated_at" timestamp(3) with time zone,
+  	"created_at" timestamp(3) with time zone
+  );
+  
+  CREATE TABLE "success_stories_page" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"hero_title" varchar DEFAULT 'Client Success Stories',
+  	"hero_hero_image_id" integer,
+  	"intro_text" varchar DEFAULT 'Real projects, real clients, real transformations — hear directly from the people whose spaces we have designed.',
+  	"videos_section_title" varchar DEFAULT 'Video Stories',
+  	"reviews_section_title" varchar DEFAULT 'What Clients Say',
+  	"seo_details_meta_title" varchar,
+  	"seo_details_meta_description" varchar,
+  	"updated_at" timestamp(3) with time zone,
+  	"created_at" timestamp(3) with time zone
+  );
+  
+  CREATE TABLE "gallery_page" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"hero_title" varchar DEFAULT 'Gallery',
+  	"hero_hero_image_id" integer,
+  	"intro_text" varchar DEFAULT 'Browse photos and videos from our completed projects — filter by category to find the style you love.',
+  	"seo_details_meta_title" varchar,
+  	"seo_details_meta_description" varchar,
+  	"updated_at" timestamp(3) with time zone,
+  	"created_at" timestamp(3) with time zone
+  );
+  
+  CREATE TABLE "site_settings" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"brand_name" varchar DEFAULT 'Desperately Seeking' NOT NULL,
+  	"brand_tagline" varchar DEFAULT 'Build Your Dream',
+  	"brand_description" varchar DEFAULT 'Desperately Seeking — discover our services, portfolio and stories.',
+  	"contact_phone" varchar,
+  	"contact_whatsapp" varchar,
+  	"contact_email" varchar,
+  	"address_street_address" varchar,
+  	"address_address_locality" varchar DEFAULT 'Dhaka',
+  	"address_address_region" varchar DEFAULT 'Dhaka',
+  	"address_postal_code" varchar,
+  	"address_address_country" varchar DEFAULT 'BD',
+  	"address_full" varchar,
+  	"geo_latitude" numeric,
+  	"geo_longitude" numeric,
+  	"geo_has_map" varchar,
+  	"social_facebook" varchar,
+  	"social_instagram" varchar,
+  	"social_linkedin" varchar,
+  	"social_youtube" varchar,
+  	"social_pinterest" varchar,
+  	"business_opening_hours" varchar DEFAULT 'Mo-Sa 10:00-19:00',
+  	"business_price_range" varchar DEFAULT '$$',
+  	"business_area_served" varchar DEFAULT 'Bangladesh',
+  	"updated_at" timestamp(3) with time zone,
+  	"created_at" timestamp(3) with time zone
   );
   
   ALTER TABLE "pages_hero_links" ADD CONSTRAINT "pages_hero_links_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."pages"("id") ON DELETE cascade ON UPDATE no action;
@@ -1222,18 +1511,27 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "projects_gallery_plans" ADD CONSTRAINT "projects_gallery_plans_image_id_media_id_fk" FOREIGN KEY ("image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "projects_gallery_plans" ADD CONSTRAINT "projects_gallery_plans_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "projects" ADD CONSTRAINT "projects_category_id_project_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."project_categories"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "projects" ADD CONSTRAINT "projects_seo_details_og_image_id_media_id_fk" FOREIGN KEY ("seo_details_og_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "projects" ADD CONSTRAINT "projects_featured_image_id_media_id_fk" FOREIGN KEY ("featured_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "services_our_approach_approaches" ADD CONSTRAINT "services_our_approach_approaches_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."services"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "services" ADD CONSTRAINT "services_hero_hero_image_id_media_id_fk" FOREIGN KEY ("hero_hero_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "services" ADD CONSTRAINT "services_seo_details_og_image_id_media_id_fk" FOREIGN KEY ("seo_details_og_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "services_rels" ADD CONSTRAINT "services_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."services"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "services_rels" ADD CONSTRAINT "services_rels_projects_fk" FOREIGN KEY ("projects_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "testimonials" ADD CONSTRAINT "testimonials_cover_image_id_media_id_fk" FOREIGN KEY ("cover_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "team_members_specialties" ADD CONSTRAINT "team_members_specialties_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."team_members"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "team_members" ADD CONSTRAINT "team_members_photo_id_media_id_fk" FOREIGN KEY ("photo_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "blog_posts_tags" ADD CONSTRAINT "blog_posts_tags_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."blog_posts"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "blog_posts" ADD CONSTRAINT "blog_posts_featured_image_id_media_id_fk" FOREIGN KEY ("featured_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "blog_posts" ADD CONSTRAINT "blog_posts_category_id_blog_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."blog_categories"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "blog_posts" ADD CONSTRAINT "blog_posts_seo_details_og_image_id_media_id_fk" FOREIGN KEY ("seo_details_og_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "slider" ADD CONSTRAINT "slider_slider_image_id_media_id_fk" FOREIGN KEY ("slider_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "service_areas" ADD CONSTRAINT "service_areas_seo_details_og_image_id_media_id_fk" FOREIGN KEY ("seo_details_og_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "google_reviews" ADD CONSTRAINT "google_reviews_reviewer_photo_id_media_id_fk" FOREIGN KEY ("reviewer_photo_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "cost_estimates_rooms" ADD CONSTRAINT "cost_estimates_rooms_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."cost_estimates"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "cost_estimates_add_ons" ADD CONSTRAINT "cost_estimates_add_ons_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."cost_estimates"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "gallery_items" ADD CONSTRAINT "gallery_items_category_id_gallery_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."gallery_categories"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "gallery_items" ADD CONSTRAINT "gallery_items_image_id_media_id_fk" FOREIGN KEY ("image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "redirects_rels" ADD CONSTRAINT "redirects_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."redirects"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "redirects_rels" ADD CONSTRAINT "redirects_rels_pages_fk" FOREIGN KEY ("pages_id") REFERENCES "public"."pages"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "redirects_rels" ADD CONSTRAINT "redirects_rels_posts_fk" FOREIGN KEY ("posts_id") REFERENCES "public"."posts"("id") ON DELETE cascade ON UPDATE no action;
@@ -1272,6 +1570,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_slider_fk" FOREIGN KEY ("slider_id") REFERENCES "public"."slider"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_service_areas_fk" FOREIGN KEY ("service_areas_id") REFERENCES "public"."service_areas"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_google_reviews_fk" FOREIGN KEY ("google_reviews_id") REFERENCES "public"."google_reviews"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_cost_estimates_fk" FOREIGN KEY ("cost_estimates_id") REFERENCES "public"."cost_estimates"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_gallery_categories_fk" FOREIGN KEY ("gallery_categories_id") REFERENCES "public"."gallery_categories"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_gallery_items_fk" FOREIGN KEY ("gallery_items_id") REFERENCES "public"."gallery_items"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_redirects_fk" FOREIGN KEY ("redirects_id") REFERENCES "public"."redirects"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_forms_fk" FOREIGN KEY ("forms_id") REFERENCES "public"."forms"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_form_submissions_fk" FOREIGN KEY ("form_submissions_id") REFERENCES "public"."form_submissions"("id") ON DELETE cascade ON UPDATE no action;
@@ -1291,6 +1592,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "home_about_section_highlights" ADD CONSTRAINT "home_about_section_highlights_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."home"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "home_our_process_steps" ADD CONSTRAINT "home_our_process_steps_icon_id_media_id_fk" FOREIGN KEY ("icon_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "home_our_process_steps" ADD CONSTRAINT "home_our_process_steps_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."home"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "home_faq_section_faqs" ADD CONSTRAINT "home_faq_section_faqs_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."home"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "home_rels" ADD CONSTRAINT "home_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."home"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "home_rels" ADD CONSTRAINT "home_rels_services_fk" FOREIGN KEY ("services_id") REFERENCES "public"."services"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "home_rels" ADD CONSTRAINT "home_rels_testimonials_fk" FOREIGN KEY ("testimonials_id") REFERENCES "public"."testimonials"("id") ON DELETE cascade ON UPDATE no action;
@@ -1305,6 +1607,21 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "contact" ADD CONSTRAINT "contact_hero_hero_image_id_media_id_fk" FOREIGN KEY ("hero_hero_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "contact_rels" ADD CONSTRAINT "contact_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."contact"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "contact_rels" ADD CONSTRAINT "contact_rels_offices_fk" FOREIGN KEY ("offices_id") REFERENCES "public"."offices"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "cost_estimator_settings_add_ons" ADD CONSTRAINT "cost_estimator_settings_add_ons_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."cost_estimator_settings"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "cost_estimator_settings_package_standard_features" ADD CONSTRAINT "cost_estimator_settings_package_standard_features_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."cost_estimator_settings"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "cost_estimator_settings_package_premium_features" ADD CONSTRAINT "cost_estimator_settings_package_premium_features_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."cost_estimator_settings"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "cost_estimator_settings_package_signature_features" ADD CONSTRAINT "cost_estimator_settings_package_signature_features_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."cost_estimator_settings"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "cost_estimator_settings_faqs" ADD CONSTRAINT "cost_estimator_settings_faqs_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."cost_estimator_settings"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "cost_estimator_settings" ADD CONSTRAINT "cost_estimator_settings_package_standard_image_id_media_id_fk" FOREIGN KEY ("package_standard_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "cost_estimator_settings" ADD CONSTRAINT "cost_estimator_settings_package_premium_image_id_media_id_fk" FOREIGN KEY ("package_premium_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "cost_estimator_settings" ADD CONSTRAINT "cost_estimator_settings_package_signature_image_id_media_id_fk" FOREIGN KEY ("package_signature_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "ceo_message_stats" ADD CONSTRAINT "ceo_message_stats_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."ceo_message"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "ceo_message" ADD CONSTRAINT "ceo_message_hero_hero_image_id_media_id_fk" FOREIGN KEY ("hero_hero_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "ceo_message" ADD CONSTRAINT "ceo_message_ceo_photo_id_media_id_fk" FOREIGN KEY ("ceo_photo_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "ceo_message" ADD CONSTRAINT "ceo_message_signature_image_id_media_id_fk" FOREIGN KEY ("signature_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "designers_page" ADD CONSTRAINT "designers_page_hero_hero_image_id_media_id_fk" FOREIGN KEY ("hero_hero_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "success_stories_page" ADD CONSTRAINT "success_stories_page_hero_hero_image_id_media_id_fk" FOREIGN KEY ("hero_hero_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "gallery_page" ADD CONSTRAINT "gallery_page_hero_hero_image_id_media_id_fk" FOREIGN KEY ("hero_hero_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   CREATE INDEX "pages_hero_links_order_idx" ON "pages_hero_links" USING btree ("_order");
   CREATE INDEX "pages_hero_links_parent_id_idx" ON "pages_hero_links" USING btree ("_parent_id");
   CREATE INDEX "pages_blocks_cta_links_order_idx" ON "pages_blocks_cta_links" USING btree ("_order");
@@ -1448,6 +1765,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "projects_gallery_plans_parent_id_idx" ON "projects_gallery_plans" USING btree ("_parent_id");
   CREATE INDEX "projects_gallery_plans_image_idx" ON "projects_gallery_plans" USING btree ("image_id");
   CREATE INDEX "projects_category_idx" ON "projects" USING btree ("category_id");
+  CREATE INDEX "projects_seo_details_seo_details_og_image_idx" ON "projects" USING btree ("seo_details_og_image_id");
   CREATE INDEX "projects_featured_image_idx" ON "projects" USING btree ("featured_image_id");
   CREATE INDEX "projects_updated_at_idx" ON "projects" USING btree ("updated_at");
   CREATE INDEX "projects_created_at_idx" ON "projects" USING btree ("created_at");
@@ -1457,6 +1775,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "services_our_approach_approaches_parent_id_idx" ON "services_our_approach_approaches" USING btree ("_parent_id");
   CREATE UNIQUE INDEX "services_slug_idx" ON "services" USING btree ("slug");
   CREATE INDEX "services_hero_hero_hero_image_idx" ON "services" USING btree ("hero_hero_image_id");
+  CREATE INDEX "services_seo_details_seo_details_og_image_idx" ON "services" USING btree ("seo_details_og_image_id");
   CREATE INDEX "services_updated_at_idx" ON "services" USING btree ("updated_at");
   CREATE INDEX "services_created_at_idx" ON "services" USING btree ("created_at");
   CREATE INDEX "services_rels_order_idx" ON "services_rels" USING btree ("order");
@@ -1466,6 +1785,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "testimonials_cover_image_idx" ON "testimonials" USING btree ("cover_image_id");
   CREATE INDEX "testimonials_updated_at_idx" ON "testimonials" USING btree ("updated_at");
   CREATE INDEX "testimonials_created_at_idx" ON "testimonials" USING btree ("created_at");
+  CREATE INDEX "team_members_specialties_order_idx" ON "team_members_specialties" USING btree ("_order");
+  CREATE INDEX "team_members_specialties_parent_id_idx" ON "team_members_specialties" USING btree ("_parent_id");
+  CREATE UNIQUE INDEX "team_members_slug_idx" ON "team_members" USING btree ("slug");
   CREATE INDEX "team_members_photo_idx" ON "team_members" USING btree ("photo_id");
   CREATE INDEX "team_members_updated_at_idx" ON "team_members" USING btree ("updated_at");
   CREATE INDEX "team_members_created_at_idx" ON "team_members" USING btree ("created_at");
@@ -1474,6 +1796,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE UNIQUE INDEX "blog_posts_slug_idx" ON "blog_posts" USING btree ("slug");
   CREATE INDEX "blog_posts_featured_image_idx" ON "blog_posts" USING btree ("featured_image_id");
   CREATE INDEX "blog_posts_category_idx" ON "blog_posts" USING btree ("category_id");
+  CREATE INDEX "blog_posts_seo_details_seo_details_og_image_idx" ON "blog_posts" USING btree ("seo_details_og_image_id");
   CREATE INDEX "blog_posts_updated_at_idx" ON "blog_posts" USING btree ("updated_at");
   CREATE INDEX "blog_posts_created_at_idx" ON "blog_posts" USING btree ("created_at");
   CREATE UNIQUE INDEX "blog_categories_slug_idx" ON "blog_categories" USING btree ("slug");
@@ -1485,11 +1808,24 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "slider_updated_at_idx" ON "slider" USING btree ("updated_at");
   CREATE INDEX "slider_created_at_idx" ON "slider" USING btree ("created_at");
   CREATE UNIQUE INDEX "service_areas_slug_idx" ON "service_areas" USING btree ("slug");
+  CREATE INDEX "service_areas_seo_details_seo_details_og_image_idx" ON "service_areas" USING btree ("seo_details_og_image_id");
   CREATE INDEX "service_areas_updated_at_idx" ON "service_areas" USING btree ("updated_at");
   CREATE INDEX "service_areas_created_at_idx" ON "service_areas" USING btree ("created_at");
   CREATE INDEX "google_reviews_reviewer_photo_idx" ON "google_reviews" USING btree ("reviewer_photo_id");
   CREATE INDEX "google_reviews_updated_at_idx" ON "google_reviews" USING btree ("updated_at");
   CREATE INDEX "google_reviews_created_at_idx" ON "google_reviews" USING btree ("created_at");
+  CREATE INDEX "cost_estimates_rooms_order_idx" ON "cost_estimates_rooms" USING btree ("_order");
+  CREATE INDEX "cost_estimates_rooms_parent_id_idx" ON "cost_estimates_rooms" USING btree ("_parent_id");
+  CREATE INDEX "cost_estimates_add_ons_order_idx" ON "cost_estimates_add_ons" USING btree ("_order");
+  CREATE INDEX "cost_estimates_add_ons_parent_id_idx" ON "cost_estimates_add_ons" USING btree ("_parent_id");
+  CREATE INDEX "cost_estimates_updated_at_idx" ON "cost_estimates" USING btree ("updated_at");
+  CREATE INDEX "cost_estimates_created_at_idx" ON "cost_estimates" USING btree ("created_at");
+  CREATE INDEX "gallery_categories_updated_at_idx" ON "gallery_categories" USING btree ("updated_at");
+  CREATE INDEX "gallery_categories_created_at_idx" ON "gallery_categories" USING btree ("created_at");
+  CREATE INDEX "gallery_items_category_idx" ON "gallery_items" USING btree ("category_id");
+  CREATE INDEX "gallery_items_image_idx" ON "gallery_items" USING btree ("image_id");
+  CREATE INDEX "gallery_items_updated_at_idx" ON "gallery_items" USING btree ("updated_at");
+  CREATE INDEX "gallery_items_created_at_idx" ON "gallery_items" USING btree ("created_at");
   CREATE UNIQUE INDEX "redirects_from_idx" ON "redirects" USING btree ("from");
   CREATE INDEX "redirects_updated_at_idx" ON "redirects" USING btree ("updated_at");
   CREATE INDEX "redirects_created_at_idx" ON "redirects" USING btree ("created_at");
@@ -1580,6 +1916,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "payload_locked_documents_rels_slider_id_idx" ON "payload_locked_documents_rels" USING btree ("slider_id");
   CREATE INDEX "payload_locked_documents_rels_service_areas_id_idx" ON "payload_locked_documents_rels" USING btree ("service_areas_id");
   CREATE INDEX "payload_locked_documents_rels_google_reviews_id_idx" ON "payload_locked_documents_rels" USING btree ("google_reviews_id");
+  CREATE INDEX "payload_locked_documents_rels_cost_estimates_id_idx" ON "payload_locked_documents_rels" USING btree ("cost_estimates_id");
+  CREATE INDEX "payload_locked_documents_rels_gallery_categories_id_idx" ON "payload_locked_documents_rels" USING btree ("gallery_categories_id");
+  CREATE INDEX "payload_locked_documents_rels_gallery_items_id_idx" ON "payload_locked_documents_rels" USING btree ("gallery_items_id");
   CREATE INDEX "payload_locked_documents_rels_redirects_id_idx" ON "payload_locked_documents_rels" USING btree ("redirects_id");
   CREATE INDEX "payload_locked_documents_rels_forms_id_idx" ON "payload_locked_documents_rels" USING btree ("forms_id");
   CREATE INDEX "payload_locked_documents_rels_form_submissions_id_idx" ON "payload_locked_documents_rels" USING btree ("form_submissions_id");
@@ -1615,6 +1954,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "home_our_process_steps_order_idx" ON "home_our_process_steps" USING btree ("_order");
   CREATE INDEX "home_our_process_steps_parent_id_idx" ON "home_our_process_steps" USING btree ("_parent_id");
   CREATE INDEX "home_our_process_steps_icon_idx" ON "home_our_process_steps" USING btree ("icon_id");
+  CREATE INDEX "home_faq_section_faqs_order_idx" ON "home_faq_section_faqs" USING btree ("_order");
+  CREATE INDEX "home_faq_section_faqs_parent_id_idx" ON "home_faq_section_faqs" USING btree ("_parent_id");
   CREATE INDEX "home_rels_order_idx" ON "home_rels" USING btree ("order");
   CREATE INDEX "home_rels_parent_idx" ON "home_rels" USING btree ("parent_id");
   CREATE INDEX "home_rels_path_idx" ON "home_rels" USING btree ("path");
@@ -1636,7 +1977,28 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "contact_rels_order_idx" ON "contact_rels" USING btree ("order");
   CREATE INDEX "contact_rels_parent_idx" ON "contact_rels" USING btree ("parent_id");
   CREATE INDEX "contact_rels_path_idx" ON "contact_rels" USING btree ("path");
-  CREATE INDEX "contact_rels_offices_id_idx" ON "contact_rels" USING btree ("offices_id");`)
+  CREATE INDEX "contact_rels_offices_id_idx" ON "contact_rels" USING btree ("offices_id");
+  CREATE INDEX "cost_estimator_settings_add_ons_order_idx" ON "cost_estimator_settings_add_ons" USING btree ("_order");
+  CREATE INDEX "cost_estimator_settings_add_ons_parent_id_idx" ON "cost_estimator_settings_add_ons" USING btree ("_parent_id");
+  CREATE INDEX "cost_estimator_settings_package_standard_features_order_idx" ON "cost_estimator_settings_package_standard_features" USING btree ("_order");
+  CREATE INDEX "cost_estimator_settings_package_standard_features_parent_id_idx" ON "cost_estimator_settings_package_standard_features" USING btree ("_parent_id");
+  CREATE INDEX "cost_estimator_settings_package_premium_features_order_idx" ON "cost_estimator_settings_package_premium_features" USING btree ("_order");
+  CREATE INDEX "cost_estimator_settings_package_premium_features_parent_id_idx" ON "cost_estimator_settings_package_premium_features" USING btree ("_parent_id");
+  CREATE INDEX "cost_estimator_settings_package_signature_features_order_idx" ON "cost_estimator_settings_package_signature_features" USING btree ("_order");
+  CREATE INDEX "cost_estimator_settings_package_signature_features_parent_id_idx" ON "cost_estimator_settings_package_signature_features" USING btree ("_parent_id");
+  CREATE INDEX "cost_estimator_settings_faqs_order_idx" ON "cost_estimator_settings_faqs" USING btree ("_order");
+  CREATE INDEX "cost_estimator_settings_faqs_parent_id_idx" ON "cost_estimator_settings_faqs" USING btree ("_parent_id");
+  CREATE INDEX "cost_estimator_settings_package_standard_package_standar_idx" ON "cost_estimator_settings" USING btree ("package_standard_image_id");
+  CREATE INDEX "cost_estimator_settings_package_premium_package_premium__idx" ON "cost_estimator_settings" USING btree ("package_premium_image_id");
+  CREATE INDEX "cost_estimator_settings_package_signature_package_signat_idx" ON "cost_estimator_settings" USING btree ("package_signature_image_id");
+  CREATE INDEX "ceo_message_stats_order_idx" ON "ceo_message_stats" USING btree ("_order");
+  CREATE INDEX "ceo_message_stats_parent_id_idx" ON "ceo_message_stats" USING btree ("_parent_id");
+  CREATE INDEX "ceo_message_hero_hero_hero_image_idx" ON "ceo_message" USING btree ("hero_hero_image_id");
+  CREATE INDEX "ceo_message_ceo_photo_idx" ON "ceo_message" USING btree ("ceo_photo_id");
+  CREATE INDEX "ceo_message_signature_image_idx" ON "ceo_message" USING btree ("signature_image_id");
+  CREATE INDEX "designers_page_hero_hero_hero_image_idx" ON "designers_page" USING btree ("hero_hero_image_id");
+  CREATE INDEX "success_stories_page_hero_hero_hero_image_idx" ON "success_stories_page" USING btree ("hero_hero_image_id");
+  CREATE INDEX "gallery_page_hero_hero_hero_image_idx" ON "gallery_page" USING btree ("hero_hero_image_id");`)
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
@@ -1682,6 +2044,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "services" CASCADE;
   DROP TABLE "services_rels" CASCADE;
   DROP TABLE "testimonials" CASCADE;
+  DROP TABLE "team_members_specialties" CASCADE;
   DROP TABLE "team_members" CASCADE;
   DROP TABLE "blog_posts_tags" CASCADE;
   DROP TABLE "blog_posts" CASCADE;
@@ -1690,6 +2053,11 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "slider" CASCADE;
   DROP TABLE "service_areas" CASCADE;
   DROP TABLE "google_reviews" CASCADE;
+  DROP TABLE "cost_estimates_rooms" CASCADE;
+  DROP TABLE "cost_estimates_add_ons" CASCADE;
+  DROP TABLE "cost_estimates" CASCADE;
+  DROP TABLE "gallery_categories" CASCADE;
+  DROP TABLE "gallery_items" CASCADE;
   DROP TABLE "redirects" CASCADE;
   DROP TABLE "redirects_rels" CASCADE;
   DROP TABLE "forms_blocks_checkbox" CASCADE;
@@ -1726,6 +2094,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "home_about_section_before_after_images" CASCADE;
   DROP TABLE "home_about_section_highlights" CASCADE;
   DROP TABLE "home_our_process_steps" CASCADE;
+  DROP TABLE "home_faq_section_faqs" CASCADE;
   DROP TABLE "home" CASCADE;
   DROP TABLE "home_rels" CASCADE;
   DROP TABLE "blog" CASCADE;
@@ -1736,6 +2105,18 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "portfolio" CASCADE;
   DROP TABLE "contact" CASCADE;
   DROP TABLE "contact_rels" CASCADE;
+  DROP TABLE "cost_estimator_settings_add_ons" CASCADE;
+  DROP TABLE "cost_estimator_settings_package_standard_features" CASCADE;
+  DROP TABLE "cost_estimator_settings_package_premium_features" CASCADE;
+  DROP TABLE "cost_estimator_settings_package_signature_features" CASCADE;
+  DROP TABLE "cost_estimator_settings_faqs" CASCADE;
+  DROP TABLE "cost_estimator_settings" CASCADE;
+  DROP TABLE "ceo_message_stats" CASCADE;
+  DROP TABLE "ceo_message" CASCADE;
+  DROP TABLE "designers_page" CASCADE;
+  DROP TABLE "success_stories_page" CASCADE;
+  DROP TABLE "gallery_page" CASCADE;
+  DROP TABLE "site_settings" CASCADE;
   DROP TYPE "public"."enum_pages_hero_links_link_type";
   DROP TYPE "public"."enum_pages_hero_links_link_appearance";
   DROP TYPE "public"."enum_pages_blocks_cta_links_link_type";
@@ -1760,11 +2141,19 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TYPE "public"."enum__pages_v_version_status";
   DROP TYPE "public"."enum_posts_status";
   DROP TYPE "public"."enum__posts_v_version_status";
+  DROP TYPE "public"."enum_cost_estimates_rooms_room_type";
+  DROP TYPE "public"."enum_cost_estimates_project_type";
+  DROP TYPE "public"."enum_cost_estimates_flat_status";
+  DROP TYPE "public"."enum_cost_estimates_city";
+  DROP TYPE "public"."enum_cost_estimates_package_tier";
+  DROP TYPE "public"."enum_cost_estimates_status";
+  DROP TYPE "public"."enum_gallery_items_media_type";
   DROP TYPE "public"."enum_redirects_to_type";
   DROP TYPE "public"."enum_forms_confirmation_type";
   DROP TYPE "public"."enum_payload_jobs_log_task_slug";
   DROP TYPE "public"."enum_payload_jobs_log_state";
   DROP TYPE "public"."enum_payload_jobs_task_slug";
   DROP TYPE "public"."enum_header_nav_items_link_type";
-  DROP TYPE "public"."enum_footer_nav_items_link_type";`)
+  DROP TYPE "public"."enum_footer_nav_items_link_type";
+  DROP TYPE "public"."enum_cost_estimator_settings_add_ons_room_scope";`)
 }

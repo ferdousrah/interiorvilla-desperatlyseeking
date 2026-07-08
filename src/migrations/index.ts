@@ -1,9 +1,9 @@
-import * as migration_20260206_110835_add_google_reviews from './20260206_110835_add_google_reviews';
+import * as migration_20260708_135534_initial from './20260708_135534_initial';
 
 export const migrations = [
   {
-    up: migration_20260206_110835_add_google_reviews.up,
-    down: migration_20260206_110835_add_google_reviews.down,
-    name: '20260206_110835_add_google_reviews'
+    up: migration_20260708_135534_initial.up,
+    down: migration_20260708_135534_initial.down,
+    name: '20260708_135534_initial'
   },
 ];
