@@ -12,14 +12,55 @@ import {
   Mail,
   MapPin,
 } from 'lucide-react'
-import type { ServiceArea } from '@/payload-types'
+import type { ServiceArea, Footer } from '@/payload-types'
 import { siteConfig } from '@/config/site'
+import type { ResolvedSiteConfig } from '@/utilities/getSiteConfig'
 
 interface FooterSectionProps {
   serviceAreas?: ServiceArea[]
+  /** Footer global data (admin-editable). Falls back to built-in defaults. */
+  footer?: Footer | null
+  /** Resolved Site Settings (admin-editable). Falls back to static siteConfig. */
+  site?: ResolvedSiteConfig | null
 }
 
-export const FooterSection = ({ serviceAreas = [] }: FooterSectionProps) => {
+const DEFAULT_QUICK_LINKS = [
+  { label: 'About Us', url: '/about' },
+  { label: 'Portfolio', url: '/portfolio' },
+  { label: 'Blog', url: '/blog' },
+  { label: 'Residential Interior', url: '/services/residential-interior' },
+  { label: 'Commercial Interior', url: '/services/commercial-interior' },
+  { label: 'Architectural Consultancy', url: '/services/architectural-consultancy' },
+  { label: 'View All Services', url: '/services' },
+]
+
+const DEFAULT_IMPORTANT_LINKS = [
+  { label: 'Message from CEO', url: '/message-from-ceo' },
+  { label: 'Meet Our Team', url: '/our-designers' },
+  { label: 'Client Success Stories', url: '/client-success-stories' },
+  { label: 'Gallery', url: '/gallery' },
+  { label: 'FAQ', url: '/faq' },
+  { label: 'Cost Estimator', url: '/cost-estimator' },
+  { label: 'Sitemap', url: '/sitemap' },
+]
+
+export const FooterSection = ({ serviceAreas = [], footer, site }: FooterSectionProps) => {
+  const cfg = site || siteConfig
+  const headline = footer?.headline || "Let's Work Together and\nCreate Something Extraordinary!"
+  const headlineLines = headline.split('\n').filter(Boolean)
+  const contactTitle = footer?.contactTitle || 'Contact Us'
+  const quickLinksTitle = footer?.quickLinks?.title || 'Quick Links'
+  const quickLinks =
+    footer?.quickLinks?.links && footer.quickLinks.links.length > 0
+      ? footer.quickLinks.links
+      : DEFAULT_QUICK_LINKS
+  const importantLinksTitle = footer?.importantLinks?.title || 'Important Links'
+  const importantLinks =
+    footer?.importantLinks?.links && footer.importantLinks.links.length > 0
+      ? footer.importantLinks.links
+      : DEFAULT_IMPORTANT_LINKS
+  const serviceAreasTitle = footer?.serviceAreasTitle || 'Service Areas'
+  const copyrightName = footer?.copyrightText || cfg.name
   const sectionRef = useRef<HTMLElement>(null)
   const footerHeadingRef = useRef<HTMLHeadingElement>(null)
   const footerHeadingWrapperRef = useRef<HTMLDivElement>(null)
@@ -215,25 +256,25 @@ export const FooterSection = ({ serviceAreas = [] }: FooterSectionProps) => {
       icon: Facebook,
       name: 'Facebook',
       color: '#1877F2',
-      url: siteConfig.social.facebook,
+      url: cfg.social.facebook,
     },
     {
       icon: Instagram,
       name: 'Instagram',
       color: '#E4405F',
-      url: siteConfig.social.instagram,
+      url: cfg.social.instagram,
     },
     {
       icon: Youtube,
       name: 'Youtube',
       color: '#FF0000',
-      url: siteConfig.social.youtube,
+      url: cfg.social.youtube,
     },
     {
       icon: Linkedin,
       name: 'LinkedIn',
       color: '#0A66C2',
-      url: siteConfig.social.linkedin,
+      url: cfg.social.linkedin,
     },
   ]
 
@@ -283,8 +324,12 @@ export const FooterSection = ({ serviceAreas = [] }: FooterSectionProps) => {
                 className="text-xl sm:text-2xl md:text-[32px] lg:text-[40px] leading-tight md:leading-[44px] lg:leading-[56px] font-medium text-white"
                 style={{ transformStyle: 'preserve-3d', transform: 'translateZ(0)' }}
               >
-                Let&apos;s Work Together and <br />
-                Create Something Extraordinary!
+                {headlineLines.map((line, i) => (
+                  <React.Fragment key={i}>
+                    {line}
+                    {i < headlineLines.length - 1 && <br />}
+                  </React.Fragment>
+                ))}
               </h2>
             </div>
           </div>
@@ -297,27 +342,27 @@ export const FooterSection = ({ serviceAreas = [] }: FooterSectionProps) => {
         >
           {/* Contact Us Column */}
           <div className="flex flex-col items-start gap-6">
-            <h4 className="font-medium text-white text-lg leading-[26px]">Contact Us</h4>
+            <h4 className="font-medium text-white text-lg leading-[26px]">{contactTitle}</h4>
             <div className="w-full h-px bg-white/30 -mt-2" />
 
             <div className="flex flex-col items-start gap-3 w-full">
               <a
-                href={`tel:${siteConfig.contact.phone}`}
+                href={`tel:${cfg.contact.phone}`}
                 className="flex items-center gap-3 font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2 group"
               >
                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                <span>{siteConfig.contact.phone}</span>
+                <span>{cfg.contact.phone}</span>
               </a>
               <a
-                href={`mailto:${siteConfig.contact.email}`}
+                href={`mailto:${cfg.contact.email}`}
                 className="flex items-center gap-3 font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2 group"
               >
                 <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                <span>{siteConfig.contact.email}</span>
+                <span>{cfg.contact.email}</span>
               </a>
               <div className="flex items-start gap-3 font-normal text-white text-sm leading-6">
                 <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                {siteConfig.address.full}
+                {cfg.address.full}
               </div>
 
               {/* Social Icons */}
@@ -351,123 +396,45 @@ export const FooterSection = ({ serviceAreas = [] }: FooterSectionProps) => {
 
           {/* Quick Links Column */}
           <div className="flex flex-col items-start gap-6">
-            <h4 className="font-medium text-white text-lg leading-[26px]">Quick Links</h4>
+            <h4 className="font-medium text-white text-lg leading-[26px]">{quickLinksTitle}</h4>
             <div className="w-full h-px bg-white/30 -mt-2" />
 
             <div className="flex flex-col items-start gap-3 w-full">
-              <Link
-                prefetch={false}
-                href="/about"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                About Us
-              </Link>
-              <Link
-                prefetch={false}
-                href="/portfolio"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Portfolio
-              </Link>
-              <Link
-                prefetch={false}
-                href="/blog"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Blog
-              </Link>
-              <Link
-                prefetch={false}
-                href="/services/residential-interior"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Residential Interior
-              </Link>
-              <Link
-                prefetch={false}
-                href="/services/commercial-interior"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Commercial Interior
-              </Link>
-              <Link
-                prefetch={false}
-                href="/services/architectural-consultancy"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Architectural Consultancy
-              </Link>
-              <Link
-                prefetch={false}
-                href="/services"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                View All Services
-              </Link>
+              {quickLinks.map((item, i) => (
+                <Link
+                  prefetch={false}
+                  key={i}
+                  href={item.url}
+                  className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
           </div>
 
           {/* Important Links Column */}
           <div className="flex flex-col items-start gap-6">
-            <h4 className="font-medium text-white text-lg leading-[26px]">Important Links</h4>
+            <h4 className="font-medium text-white text-lg leading-[26px]">{importantLinksTitle}</h4>
             <div className="w-full h-px bg-white/30 -mt-2" />
 
             <div className="flex flex-col items-start gap-3 w-full">
-              <Link
-                prefetch={false}
-                href="/message-from-ceo"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Message from CEO
-              </Link>
-              <Link
-                prefetch={false}
-                href="/our-designers"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Meet Our Team
-              </Link>
-              <Link
-                prefetch={false}
-                href="/client-success-stories"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Client Success Stories
-              </Link>
-              <Link
-                prefetch={false}
-                href="/gallery"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Gallery
-              </Link>
-              <Link
-                prefetch={false}
-                href="/faq"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                FAQ
-              </Link>
-              <Link
-                prefetch={false}
-                href="/cost-estimator"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Cost Estimator
-              </Link>
-              <Link
-                prefetch={false}
-                href="/sitemap"
-                className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
-              >
-                Sitemap
-              </Link>
+              {importantLinks.map((item, i) => (
+                <Link
+                  prefetch={false}
+                  key={i}
+                  href={item.url}
+                  className="font-normal text-white text-sm leading-6 transition-all duration-300 hover:text-primary hover:translate-x-2"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
           </div>
 
           {/* Service Areas Column */}
           <div className="flex flex-col items-start gap-6">
-            <h4 className="font-medium text-white text-lg leading-[26px]">Service Areas</h4>
+            <h4 className="font-medium text-white text-lg leading-[26px]">{serviceAreasTitle}</h4>
             <div className="w-full h-px bg-white/30 -mt-2" />
 
             <div className="relative w-full">
@@ -508,7 +475,7 @@ export const FooterSection = ({ serviceAreas = [] }: FooterSectionProps) => {
             <div className="flex items-center gap-2">
               <CopyrightIcon className="w-4 h-4 text-white" />
               <div className="font-normal text-white text-sm leading-6">
-                2026 Desperately Seeking. All rights reserved.
+                {new Date().getFullYear()} {copyrightName}. All rights reserved.
               </div>
             </div>
           </div>

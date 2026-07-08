@@ -8,12 +8,25 @@ import { Card, CardContent } from '../ui/Card'
 import { PerformanceImage } from '../ui/PerformanceImage'
 import useEmblaCarousel from 'embla-carousel-react'
 import type { BlogPost, Media } from '@/payload-types'
+import { splitTitle } from '../ui/splitTitle'
 
 interface BlogSectionProps {
   posts?: BlogPost[]
+  data?: {
+    sectionLabel?: string | null
+    sectionTitle?: string | null
+    viewAllLabel?: string | null
+    viewAllUrl?: string | null
+  } | null
 }
 
-export const BlogSection = ({ posts = [] }: BlogSectionProps) => {
+export const BlogSection = ({ posts = [], data }: BlogSectionProps) => {
+  const sectionLabel = data?.sectionLabel || 'BLOG'
+  const { primary: titlePrimary, highlight: titleHighlight } = splitTitle(
+    data?.sectionTitle || 'Latest Stories',
+  )
+  const viewAllLabel = data?.viewAllLabel || 'View All Blogs'
+  const viewAllUrl = data?.viewAllUrl || '/blog'
   const sectionRef = useRef<HTMLElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const headingWrapperRef = useRef<HTMLDivElement>(null)
@@ -155,7 +168,7 @@ export const BlogSection = ({ posts = [] }: BlogSectionProps) => {
         <div className="flex flex-col items-center mb-10 md:mb-20">
           <div className="flex items-center justify-center mb-3">
             <div className="w-1 h-[25px] bg-primary rounded-sm" />
-            <div className="mx-3 font-normal text-[#48515c] text-sm tracking-[0.9px]">BLOG</div>
+            <div className="mx-3 font-normal text-[#48515c] text-sm tracking-[0.9px]">{sectionLabel}</div>
             <div className="w-1 h-[25px] bg-primary rounded-sm" />
           </div>
           <div ref={headingWrapperRef} className="cursor-default perspective-[1000px]">
@@ -163,8 +176,8 @@ export const BlogSection = ({ posts = [] }: BlogSectionProps) => {
               ref={headingRef}
               className="font-medium text-2xl sm:text-3xl md:text-[40px] text-center leading-tight md:leading-[62px] mb-4 md:mb-6"
             >
-              <span className="text-[#0d1529]">Latest</span>{' '}
-              <span className="text-secondary">Stories</span>
+              <span className="text-[#0d1529]">{titlePrimary}</span>{' '}
+              <span className="text-secondary">{titleHighlight}</span>
             </h2>
           </div>
         </div>
@@ -327,10 +340,10 @@ export const BlogSection = ({ posts = [] }: BlogSectionProps) => {
 
         {/* View All Blogs */}
         <div className="flex justify-center mt-10 md:mt-12">
-          <Link href="/blog" aria-label="View all blog posts">
+          <Link href={viewAllUrl} aria-label="View all blog posts">
             <Button className="bg-transparent border-2 border-primary rounded-full h-11 px-8 flex items-center gap-2 group transition-all duration-300 hover:bg-primary hover:scale-105 hover:shadow-lg">
               <span className="font-bold text-primary text-sm group-hover:text-white transition-colors duration-300">
-                View All Blogs
+                {viewAllLabel}
               </span>
               <div className="w-[28px] h-[28px] bg-primary rounded-full flex items-center justify-center transition-colors duration-300 group-hover:bg-white">
                 <ArrowRightIcon className="h-4 w-4 text-white transition-colors duration-300 group-hover:text-primary" />

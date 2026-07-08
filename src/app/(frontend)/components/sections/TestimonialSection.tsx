@@ -5,9 +5,14 @@ import { ArrowLeft, ArrowRight, PlayIcon } from 'lucide-react'
 import { Card, CardContent } from '../ui/Card'
 import useEmblaCarousel from 'embla-carousel-react'
 import type { Testimonial as TestimonialType, Media } from '@/payload-types'
+import { splitTitle } from '../ui/splitTitle'
 
 interface TestimonialSectionProps {
   testimonials?: TestimonialType[]
+  data?: {
+    sectionTitle?: string | null
+    shortDescription?: string | null
+  } | null
 }
 
 // Convert YouTube links into embed format
@@ -26,7 +31,12 @@ const getYouTubeEmbedUrl = (url: string): string => {
   }
 }
 
-export const TestimonialSection = ({ testimonials = [] }: TestimonialSectionProps) => {
+export const TestimonialSection = ({ testimonials = [], data }: TestimonialSectionProps) => {
+  const { primary: titlePrimary, highlight: titleHighlight } = splitTitle(
+    data?.sectionTitle || 'Client Stories',
+  )
+  const sectionDescription =
+    data?.shortDescription || 'We create spaces that inspire and reflect your unique lifestyle'
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   const [fancyboxLoaded, setFancyboxLoaded] = useState(false)
 
@@ -179,15 +189,15 @@ export const TestimonialSection = ({ testimonials = [] }: TestimonialSectionProp
               ref={headingRef}
               className="font-medium text-2xl sm:text-3xl md:text-[40px] text-center leading-tight md:leading-[62px] mb-4 md:mb-2"
             >
-              <span className="text-[#0d1529]">Client </span>
-              <span className="text-secondary">Stories</span>
+              <span className="text-[#0d1529]">{titlePrimary} </span>
+              <span className="text-secondary">{titleHighlight}</span>
             </h2>
           </div>
           <p
             ref={descriptionRef}
             className="text-sm sm:text-base md:text-lg text-[#626161] max-w-4xl mx-auto leading-relaxed px-4 md:px-8"
           >
-            We create spaces that inspire and reflect your unique lifestyle
+            {sectionDescription}
           </p>
         </div>
 

@@ -2640,6 +2640,42 @@ export interface Header {
  */
 export interface Footer {
   id: number;
+  /**
+   * Big footer heading. Line breaks are preserved.
+   */
+  headline?: string | null;
+  quickLinks?: {
+    title?: string | null;
+    /**
+     * Leave empty to use the built-in defaults.
+     */
+    links?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  importantLinks?: {
+    title?: string | null;
+    /**
+     * Leave empty to use the built-in defaults.
+     */
+    links?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  contactTitle?: string | null;
+  serviceAreasTitle?: string | null;
+  /**
+   * Text after the © year. Leave empty to use the site name from Site Settings.
+   */
+  copyrightText?: string | null;
   navItems?:
     | {
         link: {
@@ -2693,28 +2729,85 @@ export interface Home {
     backgroundColor?: string | null;
   };
   servicesSection?: {
+    /**
+     * The last word is rendered in the accent color.
+     */
     sectionTitle?: string | null;
     shortDescription?: string | null;
+    /**
+     * The 3 service cards. Leave empty to use the built-in defaults. Icon and hover video are optional.
+     */
+    cards?:
+      | {
+          title: string;
+          description?: string | null;
+          /**
+           * e.g. /services/residential-interior
+           */
+          link?: string | null;
+          icon?: (number | null) | Media;
+          /**
+           * Optional background video shown on hover, e.g. /videos/residential.mp4
+           */
+          videoUrl?: string | null;
+          id?: string | null;
+        }[]
+      | null;
     services?: (number | Service)[] | null;
     backgroundColor?: string | null;
   };
   ourProcess?: {
+    /**
+     * The last word is rendered in the accent color.
+     */
     sectionTitle?: string | null;
     shortDescription?: string | null;
+    /**
+     * Process steps. Leave empty to use the built-in 5 defaults.
+     */
     steps?:
       | {
           icon?: (number | null) | Media;
           title?: string | null;
+          description?: string | null;
+          /**
+           * Accent color hex, e.g. #6366F1. Optional.
+           */
+          color?: string | null;
           id?: string | null;
         }[]
       | null;
     backgroundColor?: string | null;
   };
   clientStories?: {
+    /**
+     * The last word is rendered in the accent color.
+     */
     sectionTitle?: string | null;
     shortDescription?: string | null;
     testimonials?: (number | Testimonial)[] | null;
     backgroundColor?: string | null;
+  };
+  blogSection?: {
+    sectionLabel?: string | null;
+    /**
+     * The last word is rendered in the accent color.
+     */
+    sectionTitle?: string | null;
+    viewAllLabel?: string | null;
+    viewAllUrl?: string | null;
+  };
+  ctaSection?: {
+    title?: string | null;
+    /**
+     * This word inside the title is rendered in the accent color.
+     */
+    highlightWord?: string | null;
+    description?: string | null;
+    primaryButtonLabel?: string | null;
+    primaryButtonUrl?: string | null;
+    secondaryButtonLabel?: string | null;
+    secondaryButtonUrl?: string | null;
   };
   googleReviews?: {
     sectionTitle?: string | null;
@@ -3323,6 +3416,34 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
+  headline?: T;
+  quickLinks?:
+    | T
+    | {
+        title?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+      };
+  importantLinks?:
+    | T
+    | {
+        title?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+      };
+  contactTitle?: T;
+  serviceAreasTitle?: T;
+  copyrightText?: T;
   navItems?:
     | T
     | {
@@ -3378,6 +3499,16 @@ export interface HomeSelect<T extends boolean = true> {
     | {
         sectionTitle?: T;
         shortDescription?: T;
+        cards?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              link?: T;
+              icon?: T;
+              videoUrl?: T;
+              id?: T;
+            };
         services?: T;
         backgroundColor?: T;
       };
@@ -3391,6 +3522,8 @@ export interface HomeSelect<T extends boolean = true> {
           | {
               icon?: T;
               title?: T;
+              description?: T;
+              color?: T;
               id?: T;
             };
         backgroundColor?: T;
@@ -3402,6 +3535,25 @@ export interface HomeSelect<T extends boolean = true> {
         shortDescription?: T;
         testimonials?: T;
         backgroundColor?: T;
+      };
+  blogSection?:
+    | T
+    | {
+        sectionLabel?: T;
+        sectionTitle?: T;
+        viewAllLabel?: T;
+        viewAllUrl?: T;
+      };
+  ctaSection?:
+    | T
+    | {
+        title?: T;
+        highlightWord?: T;
+        description?: T;
+        primaryButtonLabel?: T;
+        primaryButtonUrl?: T;
+        secondaryButtonLabel?: T;
+        secondaryButtonUrl?: T;
       };
   googleReviews?:
     | T

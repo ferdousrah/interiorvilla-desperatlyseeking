@@ -50,8 +50,38 @@ const Home: GlobalConfig = {
       name: 'servicesSection',
       type: 'group',
       fields: [
-        { name: 'sectionTitle', type: 'text' },
-        { name: 'shortDescription', type: 'textarea' },
+        {
+          name: 'sectionTitle',
+          type: 'text',
+          defaultValue: 'Services We Offer',
+          admin: { description: 'The last word is rendered in the accent color.' },
+        },
+        {
+          name: 'shortDescription',
+          type: 'textarea',
+          defaultValue:
+            "From consultation to installation, we handle all your interior design needs, whether it's your home, office, or a large-scale project.",
+        },
+        {
+          name: 'cards',
+          type: 'array',
+          maxRows: 3,
+          admin: {
+            description:
+              'The 3 service cards. Leave empty to use the built-in defaults. Icon and hover video are optional.',
+          },
+          fields: [
+            { name: 'title', type: 'text', required: true },
+            { name: 'description', type: 'textarea' },
+            { name: 'link', type: 'text', admin: { description: 'e.g. /services/residential-interior' } },
+            { name: 'icon', type: 'upload', relationTo: 'media' },
+            {
+              name: 'videoUrl',
+              type: 'text',
+              admin: { description: 'Optional background video shown on hover, e.g. /videos/residential.mp4' },
+            },
+          ],
+        },
         {
           name: 'services',
           type: 'relationship',
@@ -65,14 +95,33 @@ const Home: GlobalConfig = {
       name: 'ourProcess',
       type: 'group',
       fields: [
-        { name: 'sectionTitle', type: 'text' },
-        { name: 'shortDescription', type: 'textarea' },
+        {
+          name: 'sectionTitle',
+          type: 'text',
+          defaultValue: 'Our Process',
+          admin: { description: 'The last word is rendered in the accent color.' },
+        },
+        {
+          name: 'shortDescription',
+          type: 'textarea',
+          defaultValue:
+            'Follow our proven 5-step journey that transforms your vision into extraordinary reality',
+        },
         {
           name: 'steps',
           type: 'array',
+          admin: {
+            description: 'Process steps. Leave empty to use the built-in 5 defaults.',
+          },
           fields: [
             { name: 'icon', type: 'upload', relationTo: 'media' },
             { name: 'title', type: 'text' },
+            { name: 'description', type: 'textarea' },
+            {
+              name: 'color',
+              type: 'text',
+              admin: { description: 'Accent color hex, e.g. #6366F1. Optional.' },
+            },
           ],
         },
         { name: 'backgroundColor', type: 'text' },
@@ -82,8 +131,17 @@ const Home: GlobalConfig = {
       name: 'clientStories',
       type: 'group',
       fields: [
-        { name: 'sectionTitle', type: 'text' },
-        { name: 'shortDescription', type: 'textarea' },
+        {
+          name: 'sectionTitle',
+          type: 'text',
+          defaultValue: 'Client Stories',
+          admin: { description: 'The last word is rendered in the accent color.' },
+        },
+        {
+          name: 'shortDescription',
+          type: 'textarea',
+          defaultValue: 'We create spaces that inspire and reflect your unique lifestyle',
+        },
         {
           name: 'testimonials',
           type: 'relationship',
@@ -91,6 +149,50 @@ const Home: GlobalConfig = {
           hasMany: true,
         },
         { name: 'backgroundColor', type: 'text' },
+      ],
+    },
+    {
+      name: 'blogSection',
+      type: 'group',
+      fields: [
+        { name: 'sectionLabel', type: 'text', defaultValue: 'BLOG' },
+        {
+          name: 'sectionTitle',
+          type: 'text',
+          defaultValue: 'Latest Stories',
+          admin: { description: 'The last word is rendered in the accent color.' },
+        },
+        { name: 'viewAllLabel', type: 'text', defaultValue: 'View All Blogs' },
+        { name: 'viewAllUrl', type: 'text', defaultValue: '/blog' },
+      ],
+    },
+    {
+      name: 'ctaSection',
+      type: 'group',
+      fields: [
+        {
+          name: 'title',
+          type: 'text',
+          defaultValue: 'Ready to Transform Your Space?',
+        },
+        {
+          name: 'highlightWord',
+          type: 'text',
+          defaultValue: 'Transform',
+          admin: {
+            description: 'This word inside the title is rendered in the accent color.',
+          },
+        },
+        {
+          name: 'description',
+          type: 'textarea',
+          defaultValue:
+            "Whether you're renovating, building from scratch, or simply looking to refresh your space, our team is ready to bring your vision to life.",
+        },
+        { name: 'primaryButtonLabel', type: 'text', defaultValue: 'Book an Appointment' },
+        { name: 'primaryButtonUrl', type: 'text', defaultValue: '/book-appointment' },
+        { name: 'secondaryButtonLabel', type: 'text', defaultValue: 'Contact Us' },
+        { name: 'secondaryButtonUrl', type: 'text', defaultValue: '/contact' },
       ],
     },
     {

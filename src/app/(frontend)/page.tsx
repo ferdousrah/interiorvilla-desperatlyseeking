@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { getCachedGlobal } from '@/utilities/getGlobals'
-import type { Home, Project, Testimonial, BlogPost, ServiceArea } from '@/payload-types'
+import { getSiteConfig } from '@/utilities/getSiteConfig'
+import type { Home, Project, Testimonial, BlogPost, ServiceArea, Footer } from '@/payload-types'
 
 import { HeroSection } from './components/sections/HeroSection'
 import { FeaturedWorksHeader } from './components/sections/FeaturedWorksHeader'
@@ -28,8 +29,16 @@ export default async function HomePage() {
 
   // Fetch all data in parallel for better performance
   // Reduced depth to minimize payload size and query time
-  const [homeData, sliderData, projectsData, testimonialsData, blogPostsData, serviceAreasData] =
-    await Promise.all([
+  const [
+    homeData,
+    sliderData,
+    projectsData,
+    testimonialsData,
+    blogPostsData,
+    serviceAreasData,
+    footerData,
+    siteSettings,
+  ] = await Promise.all([
       // Home global data
       getCachedGlobal('home', 2)() as Promise<Home>,
       // Slider data for hero section - only need image
@@ -71,6 +80,10 @@ export default async function HomePage() {
         limit: 200,
         select: { areaName: true, slug: true },
       }),
+      // Footer global (headline, link columns, copyright)
+      getCachedGlobal('footer', 1)() as Promise<Footer>,
+      // Site Settings (brand name, contact, social) — admin-editable
+      getSiteConfig(),
     ])
 
   // Pass the data to sections
@@ -112,22 +125,22 @@ export default async function HomePage() {
       <AboutSection data={homeData?.aboutSection} />
 
       {/* Services Section */}
-      <ServicesSection />
+      <ServicesSection data={homeData?.servicesSection} />
 
       {/* Our Process Section */}
-      <OurProcessSection />
+      <OurProcessSection data={homeData?.ourProcess} />
 
       {/* Testimonial Section */}
-      <TestimonialSection testimonials={testimonials} />
+      <TestimonialSection testimonials={testimonials} data={homeData?.clientStories} />
 
       {/* Blog Section */}
-      <BlogSection posts={blogPosts} />      
+      <BlogSection posts={blogPosts} data={homeData?.blogSection} />
 
       {/* FAQ Section */}
       <HomeFAQSection data={homeData?.faqSection} />
 
       {/* CTA Section */}
-      <CTASection />
+      <CTASection data={homeData?.ctaSection} />
 
       {/* SEO Content Block */}
       {homeData?.seoContent && (
@@ -137,7 +150,7 @@ export default async function HomePage() {
       )}
 
       {/* Footer Section */}
-      <FooterSection serviceAreas={serviceAreas} />
+      <FooterSection serviceAreas={serviceAreas} footer={footerData} site={siteSettings} />
     </main>
   )
 }
@@ -146,13 +159,14 @@ export default async function HomePage() {
 export const revalidate = 60
 
 export async function generateMetadata(): Promise<Metadata> {
-  const homeData = (await getCachedGlobal('home', 2)()) as Home
+  const [homeData, site] = await Promise.all([
+    getCachedGlobal('home', 2)() as Promise<Home>,
+    getSiteConfig(),
+  ])
   const seo = homeData?.seoDetails
 
-  const title = seo?.metaTitle || 'Best Interior Design Company in Bangladesh | Desperately Seeking'
-  const description =
-    seo?.metaDescription ||
-    'Transform your space with Desperately Seeking. Professional interior design services for residential and commercial spaces in Bangladesh.'
+  const title = seo?.metaTitle || `${site.name} | ${site.tagline}`
+  const description = seo?.metaDescription || site.business.description
 
   return {
     title,

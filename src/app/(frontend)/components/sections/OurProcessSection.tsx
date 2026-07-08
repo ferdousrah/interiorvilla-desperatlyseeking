@@ -3,8 +3,31 @@
 import React, { useEffect, useLayoutEffect, useRef, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, Lightbulb, CheckCircle, Rocket, Heart } from 'lucide-react'
+import { splitTitle } from '../ui/splitTitle'
+import type { Media } from '@/payload-types'
 
-export const OurProcessSection = () => {
+interface OurProcessSectionProps {
+  data?: {
+    sectionTitle?: string | null
+    shortDescription?: string | null
+    steps?:
+      | {
+          icon?: number | Media | null
+          title?: string | null
+          description?: string | null
+          color?: string | null
+        }[]
+      | null
+  } | null
+}
+
+export const OurProcessSection = ({ data }: OurProcessSectionProps) => {
+  const { primary: titlePrimary, highlight: titleHighlight } = splitTitle(
+    data?.sectionTitle || 'Our Process',
+  )
+  const sectionDescription =
+    data?.shortDescription ||
+    'Follow our proven 5-step journey that transforms your vision into extraordinary reality'
   const [hoveredStep, setHoveredStep] = useState<number | null>(null)
   const [tooltipPos, setTooltipPos] = useState<any>(null)
 
@@ -36,8 +59,8 @@ export const OurProcessSection = () => {
     checkFonts()
   }, [])
 
-  // Steps Data
-  const steps = useMemo(
+  // Default steps — used when no steps are configured in the admin panel
+  const defaultSteps = useMemo(
     () => [
       {
         id: 1,
@@ -87,6 +110,30 @@ export const OurProcessSection = () => {
     ],
     []
   )
+
+  // Merge admin-configured steps over defaults (per-index fallback for
+  // icon/colors so partially-filled steps still render nicely)
+  const steps = useMemo(() => {
+    if (!data?.steps || data.steps.length === 0) return defaultSteps
+    return data.steps.map((step, i) => {
+      const fallback = defaultSteps[i % defaultSteps.length]!
+      const iconUrl =
+        step.icon && typeof step.icon === 'object' && step.icon.url ? step.icon.url : null
+      return {
+        id: i + 1,
+        title: step.title || fallback.title,
+        description: step.description || fallback.description,
+        icon: iconUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={iconUrl} alt={step.title || ''} className="w-8 h-8 object-contain" />
+        ) : (
+          fallback.icon
+        ),
+        color: step.color || fallback.color,
+        bgColor: fallback.bgColor,
+      }
+    })
+  }, [data?.steps, defaultSteps])
 
   // GSAP animations
   useLayoutEffect(() => {
@@ -283,12 +330,12 @@ export const OurProcessSection = () => {
                 transformStyle: 'preserve-3d',
               }}
             >
-              <span className="text-[#0d1529]">Our </span>
-              <span className="text-secondary">Process</span>
+              <span className="text-[#0d1529]">{titlePrimary} </span>
+              <span className="text-secondary">{titleHighlight}</span>
             </h2>
           </div>
           <p className="text-sm sm:text-base md:text-lg text-[#626161] max-w-3xl mx-auto leading-relaxed px-4 md:px-0">
-            Follow our proven 5-step journey that transforms your vision into extraordinary reality
+            {sectionDescription}
           </p>
         </div>
 

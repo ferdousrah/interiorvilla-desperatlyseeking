@@ -5,7 +5,50 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '../ui/Button'
 
-export const CTASection = () => {
+interface CTASectionProps {
+  data?: {
+    title?: string | null
+    highlightWord?: string | null
+    description?: string | null
+    primaryButtonLabel?: string | null
+    primaryButtonUrl?: string | null
+    secondaryButtonLabel?: string | null
+    secondaryButtonUrl?: string | null
+  } | null
+}
+
+const DEFAULTS = {
+  title: 'Ready to Transform Your Space?',
+  highlightWord: 'Transform',
+  description:
+    "Whether you're renovating, building from scratch, or simply looking to refresh your space, our team is ready to bring your vision to life.",
+  primaryButtonLabel: 'Book an Appointment',
+  primaryButtonUrl: '/book-appointment',
+  secondaryButtonLabel: 'Contact Us',
+  secondaryButtonUrl: '/contact',
+}
+
+/** Renders the title with the highlight word wrapped in an accent span. */
+const renderTitle = (title: string, highlightWord?: string | null) => {
+  if (!highlightWord || !title.includes(highlightWord)) return title
+  const [before, ...rest] = title.split(highlightWord)
+  return (
+    <>
+      {before}
+      <span className="text-secondary">{highlightWord}</span>
+      {rest.join(highlightWord)}
+    </>
+  )
+}
+
+export const CTASection = ({ data }: CTASectionProps) => {
+  const title = data?.title || DEFAULTS.title
+  const highlightWord = data?.highlightWord ?? DEFAULTS.highlightWord
+  const description = data?.description || DEFAULTS.description
+  const primaryLabel = data?.primaryButtonLabel || DEFAULTS.primaryButtonLabel
+  const primaryUrl = data?.primaryButtonUrl || DEFAULTS.primaryButtonUrl
+  const secondaryLabel = data?.secondaryButtonLabel || DEFAULTS.secondaryButtonLabel
+  const secondaryUrl = data?.secondaryButtonUrl || DEFAULTS.secondaryButtonUrl
   const sectionRef = useRef<HTMLElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const headingWrapperRef = useRef<HTMLDivElement>(null)
@@ -208,7 +251,7 @@ export const CTASection = () => {
                   transform: 'translateZ(0)',
                 }}
               >
-                Ready to <span className="text-secondary">Transform</span> Your Space?
+                {renderTitle(title, highlightWord)}
               </motion.h2>
             </div>
 
@@ -216,22 +259,21 @@ export const CTASection = () => {
               ref={descriptionRef}
               className="text-sm sm:text-base md:text-lg text-[#626161] leading-relaxed mb-8 md:mb-12 mx-auto px-2"
             >
-              Whether you&apos;re renovating, building from scratch, or simply looking to refresh
-              your space, our team is ready to bring your vision to life.
+              {description}
             </motion.p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Link href="/book-appointment">
+              <Link href={primaryUrl}>
                 <Button className="bg-primary hover:bg-primary-hover text-white px-8 py-4 md:px-12 md:py-5 lg:px-16 lg:py-7 rounded-full text-base md:text-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg w-full sm:w-auto">
-                  Book an Appointment
+                  {primaryLabel}
                 </Button>
               </Link>
-              <Link href="/contact">
+              <Link href={secondaryUrl}>
                 <Button
                   variant="outline"
                   className="border-2 border-[#01190c] text-[#01190c] hover:bg-[#01190c] hover:text-white px-8 py-4 md:px-12 md:py-5 lg:px-16 lg:py-7 rounded-full text-base md:text-lg font-medium transition-all duration-300 hover:scale-105 w-full sm:w-auto"
                 >
-                  Contact Us
+                  {secondaryLabel}
                 </Button>
               </Link>
             </div>

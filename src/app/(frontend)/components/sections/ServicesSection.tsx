@@ -5,9 +5,27 @@ import Link from 'next/link'
 import { ArrowRightIcon } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Card, CardContent, CardFooter } from '../ui/Card'
+import { splitTitle } from '../ui/splitTitle'
+import type { Media } from '@/payload-types'
 
-// Service data for mapping with video backgrounds and unique color themes
-const services = [
+interface ServicesSectionProps {
+  data?: {
+    sectionTitle?: string | null
+    shortDescription?: string | null
+    cards?:
+      | {
+          title: string
+          description?: string | null
+          link?: string | null
+          icon?: number | Media | null
+          videoUrl?: string | null
+        }[]
+      | null
+  } | null
+}
+
+// Default service data — used when no cards are configured in the admin panel
+const defaultServices = [
   {
     title: 'Residential Interior',
     icon: '/home.webp',
@@ -49,7 +67,34 @@ const services = [
   },
 ]
 
-export const ServicesSection = () => {
+export const ServicesSection = ({ data }: ServicesSectionProps) => {
+  const { primary: titlePrimary, highlight: titleHighlight } = splitTitle(
+    data?.sectionTitle || 'Services We Offer',
+  )
+  const sectionDescription =
+    data?.shortDescription ||
+    "From consultation to installation, we handle all your interior design needs, whether it's your home, office, or a large-scale project."
+
+  // Map admin-configured cards over the built-in defaults (per-index fallback
+  // for icon/video/colors so partial data still renders nicely)
+  const services =
+    data?.cards && data.cards.length > 0
+      ? data.cards.map((card, i) => {
+          const fallback = defaultServices[i % defaultServices.length]!
+          const iconUrl =
+            card.icon && typeof card.icon === 'object' && card.icon.url ? card.icon.url : fallback.icon
+          return {
+            title: card.title || fallback.title,
+            icon: iconUrl,
+            description: card.description || fallback.description,
+            iconBg: fallback.iconBg,
+            video: card.videoUrl || fallback.video,
+            link: card.link || fallback.link,
+            colorTheme: fallback.colorTheme,
+          }
+        })
+      : defaultServices
+
   const sectionRef = useRef<HTMLElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
@@ -335,7 +380,7 @@ export const ServicesSection = () => {
                   color: hoveredCard !== null ? '#ffffff' : '#0d1529',
                 }}
               >
-                Services We{' '}
+                {titlePrimary}{' '}
               </span>
               <span
                 className="transition-colors duration-1000"
@@ -343,7 +388,7 @@ export const ServicesSection = () => {
                   color: hoveredCard !== null ? '#ffffff' : '#EE5428',
                 }}
               >
-                Offer
+                {titleHighlight}
               </span>
             </h2>
           </div>
@@ -354,8 +399,7 @@ export const ServicesSection = () => {
               color: hoveredCard !== null ? '#ffffff' : '#626161',
             }}
           >
-            From consultation to installation, we handle all your interior design needs, whether
-            it&apos;s your home, office, or a large-scale project.
+            {sectionDescription}
           </p>
         </div>
 
