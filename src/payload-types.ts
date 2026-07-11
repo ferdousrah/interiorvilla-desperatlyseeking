@@ -2631,6 +2631,61 @@ export interface Header {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Main navigation links (desktop + mobile). Leave empty to use the built-in defaults.
+   */
+  menuItems?:
+    | {
+        label: string;
+        /**
+         * e.g. /about. Ignored if "has mega menu" is checked.
+         */
+        url?: string | null;
+        /**
+         * Show the mega menu (configured below) under this item.
+         */
+        hasMegaMenu?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The dropdown mega menu shown under the nav item marked "has mega menu".
+   */
+  megaMenu?: {
+    /**
+     * Columns of the mega menu. Leave empty to use the built-in defaults.
+     */
+    sections?:
+      | {
+          title: string;
+          description?: string | null;
+          /**
+           * Title/accent color hex, e.g. #75BF44. Optional.
+           */
+          color?: string | null;
+          /**
+           * Column background hex, e.g. #C7E9C0. Optional.
+           */
+          backgroundColor?: string | null;
+          /**
+           * Where the column title links to.
+           */
+          viewAllUrl?: string | null;
+          links?:
+            | {
+                label: string;
+                url: string;
+                id?: string | null;
+              }[]
+            | null;
+          id?: string | null;
+        }[]
+      | null;
+    helpText?: string | null;
+    helpLinkText?: string | null;
+    buttonLabel?: string | null;
+    buttonUrl?: string | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -3414,6 +3469,39 @@ export interface HeaderSelect<T extends boolean = true> {
               label?: T;
             };
         id?: T;
+      };
+  menuItems?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        hasMegaMenu?: T;
+        id?: T;
+      };
+  megaMenu?:
+    | T
+    | {
+        sections?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              color?: T;
+              backgroundColor?: T;
+              viewAllUrl?: T;
+              links?:
+                | T
+                | {
+                    label?: T;
+                    url?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        helpText?: T;
+        helpLinkText?: T;
+        buttonLabel?: T;
+        buttonUrl?: T;
       };
   updatedAt?: T;
   createdAt?: T;

@@ -179,6 +179,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({
         onClose={() => setIsMobileMenuOpen(false)}
         siteName={siteName}
         logoUrl={logoUrl}
+        data={data}
       />
 
       <style jsx global>{`

@@ -16,8 +16,8 @@ interface HeaderNavProps {
   isMobileMenuOpen?: boolean
 }
 
-// Mega menu structure matching the original frontend exactly
-const megaMenuSections = [
+// Default mega menu structure — used when none is configured in the admin panel
+const defaultMegaMenuSections = [
   {
     title: 'Residential',
     description: 'Transform your home into a sanctuary',
@@ -78,7 +78,7 @@ const defaultNavItems = [
 ]
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({
-  data: _data,
+  data,
   isHomePage: _isHomePage = false,
   isScrolled = false,
   isScrollingUp = false,
@@ -90,7 +90,35 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const navItems = defaultNavItems
+  // Admin-configured menu (Header global) with built-in fallbacks
+  const navItems =
+    data?.menuItems && data.menuItems.length > 0
+      ? data.menuItems.map((item) => ({
+          name: item.label,
+          href: item.url || '#',
+          hasMegaMenu: !!item.hasMegaMenu,
+        }))
+      : defaultNavItems
+
+  const megaMenuSections =
+    data?.megaMenu?.sections && data.megaMenu.sections.length > 0
+      ? data.megaMenu.sections.map((section, i) => {
+          const fallback = defaultMegaMenuSections[i % defaultMegaMenuSections.length]!
+          return {
+            title: section.title,
+            description: section.description || '',
+            color: section.color || fallback.color,
+            bgColor: section.backgroundColor || fallback.bgColor,
+            links: (section.links || []).map((l) => ({ name: l.label, href: l.url })),
+            viewAllHref: section.viewAllUrl || fallback.viewAllHref,
+          }
+        })
+      : defaultMegaMenuSections
+
+  const megaHelpText = data?.megaMenu?.helpText || 'Need help choosing?'
+  const megaHelpLinkText = data?.megaMenu?.helpLinkText || 'Contact our experts'
+  const megaButtonLabel = data?.megaMenu?.buttonLabel || 'Get Consultation'
+  const megaButtonUrl = data?.megaMenu?.buttonUrl || '/contact'
 
   const handleMouseEnter = (itemName: string) => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
@@ -292,17 +320,17 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
                         <div className="max-w-7xl mx-auto">
                           <div className="flex items-center justify-between">
                             <div className="text-sm text-[#626161]">
-                              Need help choosing? <span className="text-primary font-medium">Contact our experts</span>
+                              {megaHelpText} <span className="text-primary font-medium">{megaHelpLinkText}</span>
                             </div>
                             <button
                               onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()
-                                handleSubmenuNavigation('/contact')
+                                handleSubmenuNavigation(megaButtonUrl)
                               }}
                               className="px-6 py-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-all duration-300 hover:scale-105"
                             >
-                              Get Consultation
+                              {megaButtonLabel}
                             </button>
                           </div>
                         </div>

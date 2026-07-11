@@ -15,15 +15,18 @@ import {
   Mail,
 } from 'lucide-react'
 
+import type { Header as HeaderType } from '@/payload-types'
+
 interface MobileSidebarProps {
   isOpen: boolean
   onClose: () => void
   siteName?: string
   logoUrl?: string | null
+  data?: HeaderType | null
 }
 
-// Mega menu structure
-const megaMenuSections = [
+// Default mega menu structure — used when none is configured in the admin panel
+const defaultMegaMenuSections = [
   {
     title: 'Residential',
     description: 'Transform your home into a sanctuary',
@@ -67,8 +70,8 @@ const megaMenuSections = [
   },
 ]
 
-// Navigation items
-const navItems = [
+// Default navigation items — used when none are configured in the admin panel
+const defaultNavItems = [
   { name: 'Home', icon: HomeIcon, href: '/' },
   { name: 'About Us', icon: User, href: '/about' },
   { name: 'Services', icon: Briefcase, href: '#', hasMegaMenu: true },
@@ -77,12 +80,40 @@ const navItems = [
   { name: 'Contact Us', icon: Mail, href: '/contact' },
 ]
 
+// Per-index icon fallbacks for admin-configured menu items
+const fallbackIcons = [HomeIcon, User, Briefcase, FolderOpen, BookOpen, Mail]
+
 export const MobileSidebar: React.FC<MobileSidebarProps> = ({
   isOpen,
   onClose,
   siteName = 'Desperately Seeking',
   logoUrl,
+  data,
 }) => {
+  // Admin-configured menu (Header global) with built-in fallbacks
+  const navItems =
+    data?.menuItems && data.menuItems.length > 0
+      ? data.menuItems.map((item, i) => ({
+          name: item.label,
+          icon: fallbackIcons[i % fallbackIcons.length]!,
+          href: item.url || '#',
+          hasMegaMenu: !!item.hasMegaMenu,
+        }))
+      : defaultNavItems
+
+  const megaMenuSections =
+    data?.megaMenu?.sections && data.megaMenu.sections.length > 0
+      ? data.megaMenu.sections.map((section, i) => {
+          const fallback = defaultMegaMenuSections[i % defaultMegaMenuSections.length]!
+          return {
+            title: section.title,
+            description: section.description || '',
+            color: section.color || fallback.color,
+            links: (section.links || []).map((l) => ({ name: l.label, href: l.url })),
+            viewAllHref: section.viewAllUrl || fallback.viewAllHref,
+          }
+        })
+      : defaultMegaMenuSections
   const pathname = usePathname()
   const router = useRouter()
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null)
