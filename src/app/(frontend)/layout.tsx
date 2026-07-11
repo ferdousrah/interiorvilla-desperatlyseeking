@@ -37,14 +37,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { isEnabled } = await draftMode()
   // Admin-editable branding (Site Settings global), falls back to static config
   const siteConfig = await getSiteConfig()
+  // Make relative media URLs absolute for JSON-LD consumers
+  const absoluteUrl = (path: string) =>
+    path.startsWith('http') ? path : `${siteConfig.url}${path}`
+  const logoUrl = siteConfig.logoUrl
+    ? absoluteUrl(siteConfig.logoUrl)
+    : `${siteConfig.url}/logo.png`
 
   return (
     <html className={cn(GeistSans.variable, GeistMono.variable, playfairDisplay.variable, fahkwang.variable)} lang="en" suppressHydrationWarning>
       <head>
         <InitTheme />
-        {/* Favicons */}
-        <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        {/* Favicons — admin-uploaded favicon (Site Settings) wins over static files */}
+        {siteConfig.faviconUrl ? (
+          <link href={siteConfig.faviconUrl} rel="icon" />
+        ) : (
+          <>
+            <link href="/favicon.ico" rel="icon" sizes="32x32" />
+            <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+          </>
+        )}
         {/* Preconnect to external resources for faster loading */}
         <link rel="preconnect" href="https://www.youtube.com" />
         <link rel="preconnect" href="https://i.ytimg.com" />
@@ -58,7 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <OrganizationSchema
           name={siteConfig.name}
           url={siteConfig.url}
-          logo={`${siteConfig.url}/logo.png`}
+          logo={logoUrl}
           image={`${siteConfig.url}/og-image.webp`}
           description={siteConfig.business.description}
           address={siteConfig.address}
@@ -144,10 +156,12 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: site.business.description,
     icons: {
-      icon: [
-        { url: '/favicon.ico', sizes: '32x32' },
-        { url: '/favicon.svg', type: 'image/svg+xml' },
-      ],
+      icon: site.faviconUrl
+        ? [{ url: site.faviconUrl }]
+        : [
+            { url: '/favicon.ico', sizes: '32x32' },
+            { url: '/favicon.svg', type: 'image/svg+xml' },
+          ],
     },
     openGraph: mergeOpenGraph({
       siteName: site.name,

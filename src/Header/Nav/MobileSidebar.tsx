@@ -18,6 +18,8 @@ import {
 interface MobileSidebarProps {
   isOpen: boolean
   onClose: () => void
+  siteName?: string
+  logoUrl?: string | null
 }
 
 // Mega menu structure
@@ -75,7 +77,12 @@ const navItems = [
   { name: 'Contact Us', icon: Mail, href: '/contact' },
 ]
 
-export const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
+export const MobileSidebar: React.FC<MobileSidebarProps> = ({
+  isOpen,
+  onClose,
+  siteName = 'Desperately Seeking',
+  logoUrl,
+}) => {
   const pathname = usePathname()
   const router = useRouter()
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null)
@@ -131,7 +138,13 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose })
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
               <Link href="/" onClick={onClose}>
-                <img className="w-40 h-8 object-cover" alt="Desperately Seeking dark" src="/desperately-seeking-dark.png" />
+                {logoUrl ? (
+                  <img className="w-40 h-8 object-contain" alt={siteName} src={logoUrl} />
+                ) : (
+                  <span className="font-medium text-white text-lg tracking-wide whitespace-nowrap">
+                    {siteName}
+                  </span>
+                )}
               </Link>
               <button
                 onClick={onClose}

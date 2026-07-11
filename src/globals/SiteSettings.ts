@@ -26,6 +26,24 @@ const SiteSettings: GlobalConfig = {
       fields: [
         { name: 'name', type: 'text', defaultValue: 'Desperately Seeking', required: true },
         {
+          name: 'logo',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description:
+              'Site logo shown in the header and mobile menu. Use a light/white version (the header is on dark backgrounds). PNG or SVG, roughly 200×40px. If empty, the site name is shown as text.',
+          },
+        },
+        {
+          name: 'favicon',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description:
+              'Browser tab icon. Square PNG or SVG (e.g. 64×64 or 512×512). If empty, the default /favicon.ico file is used.',
+          },
+        },
+        {
           name: 'tagline',
           type: 'text',
           defaultValue: 'Build Your Dream',

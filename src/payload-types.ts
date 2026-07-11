@@ -3338,6 +3338,14 @@ export interface SiteSetting {
   brand: {
     name: string;
     /**
+     * Site logo shown in the header and mobile menu. Use a light/white version (the header is on dark backgrounds). PNG or SVG, roughly 200×40px. If empty, the site name is shown as text.
+     */
+    logo?: (number | null) | Media;
+    /**
+     * Browser tab icon. Square PNG or SVG (e.g. 64×64 or 512×512). If empty, the default /favicon.ico file is used.
+     */
+    favicon?: (number | null) | Media;
+    /**
      * Short tagline used as OG image subtitle and title suffix.
      */
     tagline?: string | null;
@@ -3952,6 +3960,8 @@ export interface SiteSettingsSelect<T extends boolean = true> {
     | T
     | {
         name?: T;
+        logo?: T;
+        favicon?: T;
         tagline?: T;
         description?: T;
       };

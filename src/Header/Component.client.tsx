@@ -11,9 +11,17 @@ import { MobileSidebar } from './Nav/MobileSidebar'
 
 interface HeaderClientProps {
   data: Header
+  /** Site name from Site Settings — used for aria labels and the text-logo fallback */
+  siteName?: string
+  /** Admin-uploaded logo URL from Site Settings; null falls back to a text logo */
+  logoUrl?: string | null
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
+export const HeaderClient: React.FC<HeaderClientProps> = ({
+  data,
+  siteName = 'Desperately Seeking',
+  logoUrl,
+}) => {
   const [theme, setTheme] = useState<string | null>(null)
   const { headerTheme, setHeaderTheme } = useHeaderTheme()
   const pathname = usePathname()
@@ -109,18 +117,32 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
       >
         <div className="container mx-auto px-4 relative flex items-center justify-between h-full">
           {/* Logo */}
-          <Link href="/" aria-label="Desperately Seeking Home" className="relative z-10">
-            <img
-              ref={logoRef}
-              className="w-36 sm:w-44 md:w-52 h-auto object-cover z-10 cursor-pointer logo-container relative"
-              alt="Desperately Seeking dark"
-              src="/desperately-seeking-dark.png"
-              style={{
-                filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5))',
-                transform: `scale(var(--logo-scale, 1))`,
-                transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-              }}
-            />
+          <Link href="/" aria-label={`${siteName} Home`} className="relative z-10">
+            {logoUrl ? (
+              <img
+                ref={logoRef}
+                className="w-36 sm:w-44 md:w-52 h-auto object-contain z-10 cursor-pointer logo-container relative"
+                alt={siteName}
+                src={logoUrl}
+                style={{
+                  filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5))',
+                  transform: `scale(var(--logo-scale, 1))`,
+                  transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+            ) : (
+              <span
+                ref={logoRef as unknown as React.RefObject<HTMLSpanElement>}
+                className="block font-medium text-white text-lg sm:text-xl md:text-2xl tracking-wide whitespace-nowrap logo-container relative z-10 cursor-pointer"
+                style={{
+                  textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+                  transform: `scale(var(--logo-scale, 1))`,
+                  transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              >
+                {siteName}
+              </span>
+            )}
           </Link>
 
           {/* Menu Container */}
@@ -155,6 +177,8 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
       <MobileSidebar
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
+        siteName={siteName}
+        logoUrl={logoUrl}
       />
 
       <style jsx global>{`

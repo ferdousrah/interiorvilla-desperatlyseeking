@@ -9,6 +9,10 @@ export type ResolvedSiteConfig = {
   name: string
   url: string
   tagline: string
+  /** URL of the admin-uploaded header logo, or null to fall back to a text logo. */
+  logoUrl: string | null
+  /** URL of the admin-uploaded favicon, or null to use the static /favicon.ico. */
+  faviconUrl: string | null
   contact: { phone: string; whatsapp: string; email: string }
   address: {
     streetAddress: string
@@ -52,20 +56,28 @@ export const getSiteConfig = unstable_cache(
     let settings: Record<string, any> | null = null
     try {
       const payload = await getPayload({ config: configPromise })
-      settings = (await payload.findGlobal({ slug: 'site-settings' as any })) as Record<
-        string,
-        any
-      > | null
+      settings = (await payload.findGlobal({
+        slug: 'site-settings' as any,
+        depth: 1, // populate logo/favicon media
+      })) as Record<string, any> | null
     } catch {
       // DB unreachable or global not created yet — fall back to static config.
     }
 
     const d = staticDefaults
-    if (!settings) return structuredClone(d) as ResolvedSiteConfig
+    if (!settings)
+      return { ...structuredClone(d), logoUrl: null, faviconUrl: null } as ResolvedSiteConfig
+
+    const mediaUrl = (value: unknown): string | null =>
+      value && typeof value === 'object' && typeof (value as any).url === 'string'
+        ? (value as any).url
+        : null
 
     return {
       name: pick(settings.brand?.name, d.name),
       url: d.url,
+      logoUrl: mediaUrl(settings.brand?.logo),
+      faviconUrl: mediaUrl(settings.brand?.favicon),
       contact: {
         phone: pick(settings.contact?.phone, d.contact.phone),
         whatsapp: pick(settings.contact?.whatsapp, d.contact.whatsapp),
