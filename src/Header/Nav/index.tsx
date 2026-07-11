@@ -142,27 +142,6 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
     setHoveredMenu(null)
   }
 
-  // Animation variants
-  const submenuVariants = {
-    hidden: { opacity: 0, y: -15, scale: 0.97 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.35,
-        ease: [0.4, 0, 0.2, 1] as const,
-        when: 'beforeChildren' as const,
-        staggerChildren: 0.07,
-      },
-    },
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0 },
-  }
-
   return (
     <>
       {/* Mobile toggle button */}
@@ -234,109 +213,111 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
                 )}
               </button>
 
-              {/* Mega Menu */}
+              {/* Mega Menu — minimal dark glass panel */}
               <AnimatePresence>
                 {item.hasMegaMenu && hoveredMenu === item.name && (
-                  <motion.div
-                    variants={submenuVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    role="menu"
-                    aria-label="Services mega menu"
-                    className="fixed left-0 right-0 bg-white shadow-2xl overflow-hidden z-[999] border-t border-gray-200 rounded-xl"
-                    style={{
-                      maxHeight: '70vh',
-                      boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15), 0 0 30px rgba(0, 0, 0, 0.1)',
-                      top: isScrolled && isScrollingUp ? '60px' : '70px',
-                      width: '52vw',
-                      margin: '0 auto',
-                    }}
-                    onMouseEnter={() => handleMouseEnter(item.name)}
-                    onMouseLeave={handleMouseLeave}
+                  <div
+                    className="fixed left-0 right-0 z-[999] flex justify-center pointer-events-none px-4"
+                    style={{ top: isScrolled && isScrollingUp ? '68px' : '92px' }}
                   >
-                    <div className="w-full px-0">
-                      <div className="max-w-8xl mx-auto">
-                        <div className="flex gap-0">
-                          {megaMenuSections.map((section, sectionIndex) => (
-                            <motion.div
-                              key={sectionIndex}
-                              variants={itemVariants}
-                              transition={{ delay: sectionIndex * 0.1 }}
-                              className="p-6 group transition-all duration-300 border-r border-gray-100 last:border-r-0 hover:shadow-md hover:scale-[1.01] rounded-lg flex flex-col"
-                              style={{
-                                backgroundColor: section.bgColor,
-                                width: sectionIndex === 0 ? '27%' : sectionIndex === 1 ? '48%' : '25%',
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.99 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.99 }}
+                      transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                      role="menu"
+                      aria-label="Services mega menu"
+                      className="pointer-events-auto w-full max-w-4xl rounded-2xl border border-white/10 bg-[#0f0f0f]/95 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] overflow-hidden"
+                      onMouseEnter={() => handleMouseEnter(item.name)}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <div
+                        className="grid divide-x divide-white/[0.06]"
+                        style={{
+                          gridTemplateColumns: `repeat(${megaMenuSections.length}, minmax(0, 1fr))`,
+                        }}
+                      >
+                        {megaMenuSections.map((section, sectionIndex) => (
+                          <div key={sectionIndex} className="p-7 flex flex-col">
+                            {/* Column header: accent dot + uppercase title */}
+                            <Link
+                              href={section.viewAllHref}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleSubmenuNavigation(section.viewAllHref)
                               }}
+                              className="inline-flex items-center gap-2 group/title"
                             >
-                              <div className="flex flex-col mb-4">
-                                <Link
-                                  href={section.viewAllHref}
+                              <span
+                                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: section.color }}
+                              />
+                              <span className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white group-hover/title:opacity-70 transition-opacity duration-200">
+                                {section.title}
+                              </span>
+                            </Link>
+                            {section.description && (
+                              <p className="mt-2 text-xs text-white/35 leading-relaxed">
+                                {section.description}
+                              </p>
+                            )}
+
+                            {/* Links */}
+                            <div className="mt-5 -mx-2.5 space-y-0.5 max-h-[42vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                              {section.links.map((link, linkIndex) => (
+                                <button
+                                  key={linkIndex}
+                                  role="menuitem"
                                   onClick={(e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
-                                    handleSubmenuNavigation(section.viewAllHref)
+                                    handleSubmenuNavigation(link.href)
                                   }}
-                                  className="flex items-center text-xl font-semibold transition-all duration-300 relative"
-                                  style={{ color: section.color }}
+                                  className="w-full text-left px-2.5 py-2 rounded-lg text-[13px] leading-snug text-white/55 hover:text-white hover:bg-white/[0.06] transition-colors duration-150"
                                 >
-                                  {section.title}
-                                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 group-hover:w-full" />
-                                </Link>
-                                <p className="text-sm text-gray-500 mt-2">{section.description}</p>
-                              </div>
-
-                              <div
-                                className={`space-y-1 ${sectionIndex === 1 ? 'commercial-column-scroll' : ''}`}
-                                style={{
-                                  maxHeight: sectionIndex === 1 ? 'calc(70vh - 120px)' : 'auto',
-                                  overflowY: sectionIndex === 1 ? 'auto' : 'visible',
-                                }}
-                              >
-                                {section.links.map((link, linkIndex) => (
-                                  <motion.button
-                                    key={linkIndex}
-                                    role="menuitem"
-                                    variants={itemVariants}
-                                    transition={{ delay: sectionIndex * 0.1 + linkIndex * 0.05 }}
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                      handleSubmenuNavigation(link.href)
-                                    }}
-                                    className="w-full flex items-center justify-between px-4 py-2 rounded-md text-sm text-gray-600 hover:text-primary hover:bg-white/50 transition-all duration-300 group text-left"
-                                  >
-                                    <span className="relative z-10">{link.name}</span>
-                                  </motion.button>
-                                ))}
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Footer */}
-                      <div className="bg-gray-50/50 px-8 py-6 border-t border-gray-100">
-                        <div className="max-w-7xl mx-auto">
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm text-[#626161]">
-                              {megaHelpText} <span className="text-primary font-medium">{megaHelpLinkText}</span>
+                                  {link.name}
+                                </button>
+                              ))}
                             </div>
+
+                            {/* View all */}
                             <button
                               onClick={(e) => {
                                 e.preventDefault()
                                 e.stopPropagation()
-                                handleSubmenuNavigation(megaButtonUrl)
+                                handleSubmenuNavigation(section.viewAllHref)
                               }}
-                              className="px-6 py-3 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-all duration-300 hover:scale-105"
+                              className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium hover:gap-2.5 transition-all duration-200 self-start"
+                              style={{ color: section.color }}
                             >
-                              {megaButtonLabel}
+                              View all
+                              <span aria-hidden>→</span>
                             </button>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    </div>
-                  </motion.div>
+
+                      {/* Bottom bar */}
+                      <div className="flex items-center justify-between px-7 py-4 border-t border-white/[0.06] bg-white/[0.02]">
+                        <span className="text-xs text-white/35">
+                          {megaHelpText}{' '}
+                          <span className="text-white/60 font-medium">{megaHelpLinkText}</span>
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleSubmenuNavigation(megaButtonUrl)
+                          }}
+                          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white hover:text-primary hover:gap-2.5 transition-all duration-200"
+                        >
+                          {megaButtonLabel}
+                          <span aria-hidden>→</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  </div>
                 )}
               </AnimatePresence>
             </div>
